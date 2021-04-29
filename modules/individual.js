@@ -1,5 +1,6 @@
 export class Individual {
-    constructor() {
+    constructor(aDiv) {
+        this.divControlled = aDiv;
         this._newInMkt = true;
         this._dayToLive = 20;
     }
@@ -15,6 +16,10 @@ export class Individual {
     set dayToLive(day) {
         this._dayToLive = day;
     }
+    move(xPos, yPos) {
+        this.divControlled.style.left = `${xPos - this.divControlled.offsetWidth / 2}px`;
+        this.divControlled.style.top = `${yPos - this.divControlled.offsetHeight / 2}px`;
+    }
     oneTailNormalSample(mu, std, lower) {
         let u = 0, v = 0;
         while (u === 0)
@@ -29,8 +34,9 @@ export class Individual {
     }
 }
 export class Consumer extends Individual {
-    constructor(maxPayable) {
-        super();
+    constructor(aDiv, maxPayable) {
+        super(aDiv);
+        this.divControlled.style.backgroundColor = "#4C8BF5";
         this._maxPayable = maxPayable;
         this._bidPrice = this.initBidPrice();
     }
@@ -60,8 +66,9 @@ export class Consumer extends Individual {
     }
 }
 export class Supplier extends Individual {
-    constructor(minSellable) {
-        super();
+    constructor(aDiv, minSellable) {
+        super(aDiv);
+        this.divControlled.style.backgroundColor = "#DE5246";
         this._minSellable = minSellable;
         this._askPrice = this.initAskPrice();
         this._consumerQueue = [];

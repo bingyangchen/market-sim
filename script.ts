@@ -1,7 +1,7 @@
 import { Consumer, Supplier } from './individual.js';
 import { PriceMachine } from './priceMachine.js';
 
-const priceMachineChart = document.getElementById("price-machine-chart");
+const animationField = document.getElementById("animation-field");
 const marketEqChart = document.getElementById("market-eq-chart");
 
 function suffleArray(anArray: any[]): any[] {
@@ -20,27 +20,46 @@ function avg(arr: number[]): number {
 
 let initialGivenPrice: number = 100;
 let pm: PriceMachine = new PriceMachine(initialGivenPrice);
-let givenPriceData: (number | string)[][] = [["Day", "Given Price"]];
 let marketEqData: (number | string)[][] = [["Day", "Given Price", "Equilibrium"]];
 let consumerList: Consumer[] = [];
 let supplierList: Supplier[] = [];
-let numOfConsumer: number = 100;
+let numOfConsumer: number = 5;
 let numOfSupplier: number = 5;
 // initialize consumers and supplier
+let nodeDivSize: number = 0;
+if (animationField instanceof HTMLElement) {
+    nodeDivSize = Math.min(animationField.offsetHeight, animationField.offsetWidth) / (numOfConsumer + numOfSupplier);
+}
 for (let i = 0; i < Math.max(numOfConsumer, numOfSupplier); i++) {
     let [a, b] = pm.genPayableSellable(false);
-
     if (i < numOfConsumer) {
-        let c: Consumer = new Consumer(a);
-        consumerList.push(c);
+        if (animationField instanceof HTMLElement) {
+            let nodeDiv = document.createElement("div");
+            nodeDiv.className = "node";
+            nodeDiv.style.width = `${nodeDivSize}px`;
+            nodeDiv.style.height = `${nodeDivSize}px`;
+            animationField.appendChild(nodeDiv);
+            let c: Consumer = new Consumer(nodeDiv, a);
+            c.move(Math.random() * (animationField.offsetWidth - nodeDiv.offsetWidth) + nodeDiv.offsetWidth / 2, Math.random() * (animationField.offsetHeight - nodeDiv.offsetHeight) + nodeDiv.offsetHeight / 2);
+            consumerList.push(c);
+        }
     }
     if (i < numOfSupplier) {
-        let s: Supplier = new Supplier(b);
-        supplierList.push(s);
+        if (animationField instanceof HTMLElement) {
+            let nodeDiv = document.createElement("div");
+            nodeDiv.className = "node";
+            nodeDiv.style.width = `${nodeDivSize}px`;
+            nodeDiv.style.height = `${nodeDivSize}px`;
+            animationField.appendChild(nodeDiv);
+            let s: Supplier = new Supplier(nodeDiv, b);
+            s.move(Math.random() * (animationField.offsetWidth - nodeDiv.offsetWidth) + nodeDiv.offsetWidth / 2, Math.random() * (animationField.offsetHeight - nodeDiv.offsetHeight) + nodeDiv.offsetHeight / 2);
+            supplierList.push(s);
+        }
+
     }
 }
 
-for (let i = 1; i <= 500; i++) {
+for (let i = 1; i <= 300; i++) {
     // suffle consumer list before matching them to suppliers
     consumerList = suffleArray(consumerList);
 
@@ -80,11 +99,10 @@ for (let i = 1; i <= 500; i++) {
         marketEqData.push([marketEqData.length, pm.equilibrium, avg(dealPriceToday)]);
     } else {
         // givenPriceData.push([givenPriceData.length, pm.equilibrium]);
-        if (typeof marketEqData[marketEqData.length - 1][1] == "number") {
-            marketEqData.push([marketEqData.length, pm.equilibrium, marketEqData[marketEqData.length - 1][1]]);
-        }
-        else {
+        if (marketEqData.length == 1) {
             marketEqData.push([marketEqData.length, pm.equilibrium, initialGivenPrice]);
+        } else {
+            marketEqData.push([marketEqData.length, pm.equilibrium, marketEqData[marketEqData.length - 1][2]]);
         }
     }
 
@@ -118,28 +136,6 @@ for (let i = 1; i <= 500; i++) {
     }
 }
 
-function applyPriceMachineChart(dataIn: (string | number)[][]): void {
-    if (priceMachineChart != null) {
-        google.charts.load('current', { 'packages': ["corechart"] });
-        let options = {
-            title: 'Cost/Utility Given',
-            titleTextStyle: {
-                fontSize: 16,
-                bold: false,
-                color: "#777"
-            },
-            curveType: 'none',
-            width: priceMachineChart.offsetWidth - 1,
-            height: priceMachineChart.offsetHeight - 1,
-            legend: { position: 'none' },
-            // hAxis: {
-            //     title: "Day"
-            // }
-        };
-        google.charts.setOnLoadCallback(() => drawSimulatedChart(dataIn, options, "LineChart", priceMachineChart));
-    }
-}
-
 function applyMarketEqChart(dataIn: (string | number)[][]): void {
     if (marketEqChart != null) {
         google.charts.load('current', { 'packages': ["corechart"] });
@@ -168,5 +164,4 @@ function drawSimulatedChart(dataIn: any[][], options: any, chartType: string, ta
     chart.draw(data, options);
 }
 
-// applyPriceMachineChart(givenPriceData);
 applyMarketEqChart(marketEqData);

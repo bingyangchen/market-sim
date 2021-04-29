@@ -1,7 +1,9 @@
 export class Individual {
+    public divControlled: HTMLElement;
     private _newInMkt: boolean;
     private _dayToLive: number;
-    constructor() {
+    constructor(aDiv: HTMLElement) {
+        this.divControlled = aDiv;
         this._newInMkt = true;
         this._dayToLive = 20;
     }
@@ -17,6 +19,10 @@ export class Individual {
     public set dayToLive(day: number) {
         this._dayToLive = day;
     }
+    public move(xPos: number, yPos: number): void {
+        this.divControlled.style.left = `${xPos - this.divControlled.offsetWidth / 2}px`;
+        this.divControlled.style.top = `${yPos - this.divControlled.offsetHeight / 2}px`;
+    }
     public oneTailNormalSample(mu: number, std: number, lower: boolean): number {
         let u = 0, v = 0;
         while (u === 0) u = Math.random(); //Converting [0,1) to (0,1)
@@ -31,8 +37,9 @@ export class Individual {
 export class Consumer extends Individual {
     private _maxPayable: number;
     private _bidPrice: number;
-    constructor(maxPayable: number) {
-        super();
+    constructor(aDiv: HTMLElement, maxPayable: number) {
+        super(aDiv);
+        this.divControlled.style.backgroundColor = "#4C8BF5";
         this._maxPayable = maxPayable;
         this._bidPrice = this.initBidPrice();
     }
@@ -65,8 +72,9 @@ export class Supplier extends Individual {
     private _minSellable: number;
     private _askPrice: number;
     private _consumerQueue: Consumer[];
-    constructor(minSellable: number) {
-        super();
+    constructor(aDiv: HTMLElement, minSellable: number) {
+        super(aDiv);
+        this.divControlled.style.backgroundColor = "#DE5246";
         this._minSellable = minSellable;
         this._askPrice = this.initAskPrice();
         this._consumerQueue = [];

@@ -21,9 +21,10 @@ export class PriceMachine {
         return std * Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v) + mu;
     }
     genPayableSellable(needCount) {
-        if (this._numOfPairOut > 0 && this._numOfPairOut % 1 == 0) {
+        if (this._numOfPairOut > 0 && this._numOfPairOut % 10 == 0) {
             // random walking equilibrium
             this._equilibrium *= this.normalSample(1, 0.033);
+            this._numOfPairOut++;
         }
         if (needCount) {
             this._numOfPairOut++;

@@ -17,9 +17,14 @@ body {
     width: 60vw;
 }
 
+#right-side {
+    height: 100vh;
+    width: 40vw;
+}
+
 #market-eq-chart {
     height: 50vh;
-    width: 40vw;
+    width: 100%;
 }
 
 .node {

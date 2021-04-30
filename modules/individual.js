@@ -3,6 +3,7 @@ export class Individual {
         this.divControlled = aDiv;
         this._newInMkt = true;
         this._dayToLive = 20;
+        this._aggressiveness = 0;
     }
     get newInMkt() {
         return this._newInMkt;
@@ -16,21 +17,26 @@ export class Individual {
     set dayToLive(day) {
         this._dayToLive = day;
     }
+    get aggressiveness() {
+        return this._aggressiveness;
+    }
+    set aggressiveness(aggr) {
+        this._aggressiveness = aggr;
+    }
     move(xPos, yPos) {
         this.divControlled.style.left = `${xPos - this.divControlled.offsetWidth / 2}px`;
         this.divControlled.style.top = `${yPos - this.divControlled.offsetHeight / 2}px`;
     }
-    oneTailNormalSample(mu, std, lower) {
+    oneTailNormalSample(mu, std, side) {
         let u = 0, v = 0;
         while (u === 0)
             u = Math.random(); //Converting [0,1) to (0,1)
         while (v === 0)
             v = Math.random();
-        let result = std * Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v) + mu;
-        if (lower) {
-            return Math.abs(result) * -1;
+        if (side == "left") {
+            return Math.abs(std * Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v)) * -1 + mu;
         }
-        return Math.abs(result);
+        return Math.abs(std * Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v)) + mu;
     }
 }
 export class Consumer extends Individual {
@@ -38,7 +44,7 @@ export class Consumer extends Individual {
         super(aDiv);
         this.divControlled.style.backgroundColor = "#4C8BF5";
         this._maxPayable = maxPayable;
-        this._bidPrice = this.initBidPrice();
+        this._bidPrice = this.initBidPrice(false);
     }
     get maxPayable() {
         return this._maxPayable;
@@ -52,16 +58,23 @@ export class Consumer extends Individual {
     set bidPrice(aPrice) {
         this._bidPrice = aPrice;
     }
-    initBidPrice() {
+    initBidPrice(reborn) {
         this.newInMkt = true;
         this.dayToLive = 20;
-        return this._maxPayable * Math.max(0, (1 + this.oneTailNormalSample(0, 0.25, true)));
+        if (!reborn) {
+            this.aggressiveness = this.oneTailNormalSample(this.aggressiveness, 0.25, "right");
+        }
+        else {
+            this.aggressiveness = 0;
+        }
+        return this._maxPayable * Math.max(0, (1 - this.aggressiveness));
     }
     rebid() {
         this.dayToLive--;
         let delta = this._maxPayable - this._bidPrice;
         if (delta > 0) {
-            this._bidPrice += Math.min(delta, delta * this.oneTailNormalSample(0, 0.5, false));
+            this._bidPrice += Math.min(delta, delta * this.oneTailNormalSample(0, 0.5, "right"));
+            this.aggressiveness = 1 - this._bidPrice / this._maxPayable;
         }
     }
 }
@@ -70,7 +83,7 @@ export class Supplier extends Individual {
         super(aDiv);
         this.divControlled.style.backgroundColor = "#DE5246";
         this._minSellable = minSellable;
-        this._askPrice = this.initAskPrice();
+        this._askPrice = this.initAskPrice(false);
         this._consumerQueue = [];
     }
     get minSellable() {
@@ -91,16 +104,23 @@ export class Supplier extends Individual {
     set consumerQueue(anArray) {
         this._consumerQueue = anArray;
     }
-    initAskPrice() {
+    initAskPrice(reborn) {
         this.newInMkt = true;
         this.dayToLive = 20;
-        return this._minSellable * (1 + this.oneTailNormalSample(0, 0.25, false));
+        if (!reborn) {
+            this.aggressiveness = this.oneTailNormalSample(this.aggressiveness, 0.25, "right");
+        }
+        else {
+            this.aggressiveness = 0;
+        }
+        return this._minSellable * (1 + this.aggressiveness);
     }
     reask() {
         this.dayToLive--;
         let delta = this._askPrice - this._minSellable;
         if (delta > 0) {
-            this._askPrice -= Math.min(delta, delta * this.oneTailNormalSample(0, 0.5, false));
+            this._askPrice -= Math.min(delta, delta * this.oneTailNormalSample(0, 0.5, "right"));
+            this.aggressiveness = this._askPrice / this._minSellable - 1;
         }
     }
     descendingQueueAConsumer(c) {

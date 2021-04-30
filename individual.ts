@@ -2,10 +2,12 @@ export class Individual {
     public divControlled: HTMLElement;
     private _newInMkt: boolean;
     private _dayToLive: number;
+    private _aggressiveness: number;
     constructor(aDiv: HTMLElement) {
         this.divControlled = aDiv;
         this._newInMkt = true;
         this._dayToLive = 20;
+        this._aggressiveness = 0;
     }
     public get newInMkt(): boolean {
         return this._newInMkt;
@@ -19,19 +21,24 @@ export class Individual {
     public set dayToLive(day: number) {
         this._dayToLive = day;
     }
+    public get aggressiveness(): number {
+        return this._aggressiveness;
+    }
+    public set aggressiveness(aggr: number) {
+        this._aggressiveness = aggr;
+    }
     public move(xPos: number, yPos: number): void {
         this.divControlled.style.left = `${xPos - this.divControlled.offsetWidth / 2}px`;
         this.divControlled.style.top = `${yPos - this.divControlled.offsetHeight / 2}px`;
     }
-    public oneTailNormalSample(mu: number, std: number, lower: boolean): number {
+    public oneTailNormalSample(mu: number, std: number, side: string): number {
         let u = 0, v = 0;
         while (u === 0) u = Math.random(); //Converting [0,1) to (0,1)
         while (v === 0) v = Math.random();
-        let result = std * Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v) + mu;
-        if (lower) {
-            return Math.abs(result) * -1;
+        if (side == "left") {
+            return Math.abs(std * Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v)) * -1 + mu;
         }
-        return Math.abs(result);
+        return Math.abs(std * Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v)) + mu;
     }
 }
 export class Consumer extends Individual {
@@ -41,7 +48,7 @@ export class Consumer extends Individual {
         super(aDiv);
         this.divControlled.style.backgroundColor = "#4C8BF5";
         this._maxPayable = maxPayable;
-        this._bidPrice = this.initBidPrice();
+        this._bidPrice = this.initBidPrice(false);
     }
     public get maxPayable(): number {
         return this._maxPayable;
@@ -55,16 +62,22 @@ export class Consumer extends Individual {
     public set bidPrice(aPrice: number) {
         this._bidPrice = aPrice;
     }
-    public initBidPrice(): number {
+    public initBidPrice(reborn: boolean): number {
         this.newInMkt = true;
         this.dayToLive = 20;
-        return this._maxPayable * Math.max(0, (1 + this.oneTailNormalSample(0, 0.25, true)));
+        if (!reborn) {
+            this.aggressiveness = this.oneTailNormalSample(this.aggressiveness, 0.25, "right");
+        } else {
+            this.aggressiveness = 0;
+        }
+        return this._maxPayable * Math.max(0, (1 - this.aggressiveness));
     }
     public rebid(): void {
         this.dayToLive--;
         let delta = this._maxPayable - this._bidPrice;
         if (delta > 0) {
-            this._bidPrice += Math.min(delta, delta * this.oneTailNormalSample(0, 0.5, false));
+            this._bidPrice += Math.min(delta, delta * this.oneTailNormalSample(0, 0.5, "right"));
+            this.aggressiveness = 1 - this._bidPrice / this._maxPayable;
         }
     }
 }
@@ -76,7 +89,7 @@ export class Supplier extends Individual {
         super(aDiv);
         this.divControlled.style.backgroundColor = "#DE5246";
         this._minSellable = minSellable;
-        this._askPrice = this.initAskPrice();
+        this._askPrice = this.initAskPrice(false);
         this._consumerQueue = [];
     }
     public get minSellable(): number {
@@ -97,16 +110,22 @@ export class Supplier extends Individual {
     public set consumerQueue(anArray: Consumer[]) {
         this._consumerQueue = anArray;
     }
-    public initAskPrice(): number {
+    public initAskPrice(reborn: boolean): number {
         this.newInMkt = true;
         this.dayToLive = 20;
-        return this._minSellable * (1 + this.oneTailNormalSample(0, 0.25, false));
+        if (!reborn) {
+            this.aggressiveness = this.oneTailNormalSample(this.aggressiveness, 0.25, "right");
+        } else {
+            this.aggressiveness = 0;
+        }
+        return this._minSellable * (1 + this.aggressiveness);
     }
     public reask(): void {
         this.dayToLive--;
         let delta = this._askPrice - this._minSellable;
         if (delta > 0) {
-            this._askPrice -= Math.min(delta, delta * this.oneTailNormalSample(0, 0.5, false));
+            this._askPrice -= Math.min(delta, delta * this.oneTailNormalSample(0, 0.5, "right"));
+            this.aggressiveness = this._askPrice / this._minSellable - 1;
         }
     }
     public descendingQueueAConsumer(c: Consumer): void {

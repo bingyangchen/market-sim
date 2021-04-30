@@ -24,8 +24,8 @@ let pm: PriceMachine = new PriceMachine(initialEq);
 let marketEqData: (number | string)[][] = [["Day", "Given Price", "Equilibrium"]];
 let consumerList: Consumer[] = [];
 let supplierList: Supplier[] = [];
-let numOfConsumer: number = 25;
-let numOfSupplier: number = 25;
+let numOfConsumer: number = 10;
+let numOfSupplier: number = 10;
 let consumerSurplus: number = 0;
 let producerSurplus: number = 0;
 
@@ -37,6 +37,8 @@ if (animationField instanceof HTMLElement) {
     nodeDivSize = Math.min(animationField.offsetHeight, animationField.offsetWidth) / (numOfConsumer + numOfSupplier);
 }
 
+let pauseTime: number = 1000;
+
 // initialize all consumers and supplier
 for (let i = 0; i < Math.max(numOfConsumer, numOfSupplier); i++) {
     let [a, b] = pm.genPayableSellable(false);
@@ -46,9 +48,9 @@ for (let i = 0; i < Math.max(numOfConsumer, numOfSupplier); i++) {
             nodeDiv.className = "node";
             nodeDiv.style.width = `${nodeDivSize}px`;
             nodeDiv.style.height = `${nodeDivSize}px`;
+            nodeDiv.style.transitionDuration = `${pauseTime / 2}ms`;
             animationField.appendChild(nodeDiv);
             let c: Consumer = new Consumer(nodeDiv, a);
-            c.move(Math.random() * (animationField.offsetWidth - nodeDiv.offsetWidth) + nodeDiv.offsetWidth / 2, Math.random() * (animationField.offsetHeight - nodeDiv.offsetHeight) + nodeDiv.offsetHeight / 2);
             consumerList.push(c);
         }
     }
@@ -58,102 +60,113 @@ for (let i = 0; i < Math.max(numOfConsumer, numOfSupplier); i++) {
             nodeDiv.className = "node";
             nodeDiv.style.width = `${nodeDivSize}px`;
             nodeDiv.style.height = `${nodeDivSize}px`;
+            nodeDiv.style.transitionDuration = `${pauseTime / 2}ms`;
             animationField.appendChild(nodeDiv);
             let s: Supplier = new Supplier(nodeDiv, b);
-            s.move(Math.random() * (animationField.offsetWidth - nodeDiv.offsetWidth) + nodeDiv.offsetWidth / 2, Math.random() * (animationField.offsetHeight - nodeDiv.offsetHeight) + nodeDiv.offsetHeight / 2);
             supplierList.push(s);
         }
 
     }
 }
-function simulate(maxDay: number) {
-    // suffle consumer list and supplier list before matching them together
-    consumerList = suffleArray(consumerList);
-    supplierList = suffleArray(supplierList);
 
-    // matching each consumer to each supplier
-    for (let i = 0; i < consumerList.length; i++) {
-        supplierList[i % supplierList.length].descendingQueueAConsumer(consumerList[i]);
-    }
+function simulate(maxDay: number, pauseTime: number) {
+    if (animationField != null) {
+        // suffle consumer list and supplier list before matching them together
+        consumerList = suffleArray(consumerList);
+        supplierList = suffleArray(supplierList);
 
-    let dealPriceToday: number[] = [];
-    // check if deal
-    for (let eachSupplier of supplierList) {
-        eachSupplier.newInMkt = false;
-        let paired: boolean = false;
-        for (let eachConsumer of eachSupplier.consumerQueue) {
-            eachConsumer.newInMkt = false;
-            if (!paired) {
-                if (eachConsumer.bidPrice > eachSupplier.askPrice) {
-                    let dealPrice = (eachConsumer.bidPrice + eachSupplier.askPrice) / 2;
-                    dealPriceToday.push(dealPrice);
-                    consumerSurplus += (eachConsumer.maxPayable - dealPrice);
-                    producerSurplus += (dealPrice - eachSupplier.minSellable);
-                    // generate a new pair of prices
-                    let [a, b] = pm.genPayableSellable(true);
+        // matching each consumer to each supplier
+        for (let i = 0; i < consumerList.length; i++) {
+            supplierList[i % supplierList.length].descendingQueueAConsumer(consumerList[i]);
+            setTimeout(() => { consumerList[i].move(supplierList[i % supplierList.length].divControlled.offsetLeft, supplierList[i % supplierList.length].divControlled.offsetTop); }, pauseTime / 2)
+        }
 
-                    eachConsumer.maxPayable = a;
-                    eachConsumer.bidPrice = eachConsumer.initBidPrice(false);
+        let dealPriceToday: number[] = [];
+        // check if deal
+        for (let eachSupplier of supplierList) {
+            eachSupplier.newInMkt = false;
+            let paired: boolean = false;
+            for (let eachConsumer of eachSupplier.consumerQueue) {
+                eachConsumer.newInMkt = false;
+                if (!paired) {
+                    if (eachConsumer.bidPrice > eachSupplier.askPrice) {
+                        let dealPrice = (eachConsumer.bidPrice + eachSupplier.askPrice) / 2;
+                        dealPriceToday.push(dealPrice);
+                        consumerSurplus += (eachConsumer.maxPayable - dealPrice);
+                        producerSurplus += (dealPrice - eachSupplier.minSellable);
+                        // generate a new pair of prices
+                        let [a, b] = pm.genPayableSellable(true);
 
-                    eachSupplier.minSellable = b;
-                    eachSupplier.askPrice = eachSupplier.initAskPrice(false);
+                        eachConsumer.maxPayable = a;
+                        eachConsumer.bidPrice = eachConsumer.initBidPrice(false);
 
-                    paired = true;
+                        eachSupplier.minSellable = b;
+                        eachSupplier.askPrice = eachSupplier.initAskPrice(false);
+
+                        paired = true;
+                    }
                 }
             }
         }
-    }
 
-    // record equilibrium and given-costs/utility if any deal happened today 
-    if (dealPriceToday.length > 0) {
-        // givenPriceData.push([givenPriceData.length, pm.equilibrium]);
-        marketEqData.push([marketEqData.length, pm.equilibrium, avg(dealPriceToday)]);
-    } else {
-        // givenPriceData.push([givenPriceData.length, pm.equilibrium]);
-        if (marketEqData.length == 1) {
-            marketEqData.push([marketEqData.length, pm.equilibrium, initialEq]);
+        // record equilibrium and given-costs/utility if any deal happened today 
+        if (dealPriceToday.length > 0) {
+            // givenPriceData.push([givenPriceData.length, pm.equilibrium]);
+            marketEqData.push([marketEqData.length, pm.equilibrium, avg(dealPriceToday)]);
         } else {
-            marketEqData.push([marketEqData.length, pm.equilibrium, marketEqData[marketEqData.length - 1][2]]);
-        }
-    }
-
-    // clear the consumer queue of all supplier
-    for (let eachSupplier of supplierList) {
-        eachSupplier.consumerQueue = [];
-    }
-
-    // rebid and reask, prepare to go back to rest
-    for (let eachConsumer of consumerList) {
-        if (!eachConsumer.newInMkt) {
-            eachConsumer.rebid();
-            if (eachConsumer.dayToLive == 0) {
-                // die and reborn
-                let [a, b] = pm.genPayableSellable(false);
-                eachConsumer.maxPayable = a;
-                eachConsumer.bidPrice = eachConsumer.initBidPrice(true);
+            // givenPriceData.push([givenPriceData.length, pm.equilibrium]);
+            if (marketEqData.length == 1) {
+                marketEqData.push([marketEqData.length, pm.equilibrium, initialEq]);
+            } else {
+                marketEqData.push([marketEqData.length, pm.equilibrium, marketEqData[marketEqData.length - 1][2]]);
             }
         }
-    }
-    for (let eachSupplier of supplierList) {
-        if (!eachSupplier.newInMkt) {
-            eachSupplier.reask();
-            if (eachSupplier.dayToLive == 0) {
-                // die and reborn
-                let [a, b] = pm.genPayableSellable(false);
-                eachSupplier.minSellable = b;
-                eachSupplier.askPrice = eachSupplier.initAskPrice(true);
+
+        // clear the consumer queue of all supplier
+        for (let eachSupplier of supplierList) {
+            eachSupplier.consumerQueue = [];
+        }
+
+        // go back to rest and rebid/reask 
+        for (let eachConsumer of consumerList) {
+            const xPos = Math.random() * (animationField.offsetWidth - eachConsumer.divControlled.offsetWidth) + eachConsumer.divControlled.offsetWidth / 2;
+            const yPos = Math.random() * (animationField.offsetHeight - eachConsumer.divControlled.offsetHeight) + eachConsumer.divControlled.offsetHeight / 2;
+            eachConsumer.move(xPos, yPos);
+            if (!eachConsumer.newInMkt) {
+                eachConsumer.rebid();
+                if (eachConsumer.dayToLive == 0) {
+                    // die and reborn
+                    let [a, b] = pm.genPayableSellable(false);
+                    eachConsumer.maxPayable = a;
+                    eachConsumer.bidPrice = eachConsumer.initBidPrice(true);
+                }
             }
         }
-    }
-    if (currentDay <= maxDay) {
-        currentDay++;
-        applyMarketEqChart(marketEqData);
-        applySuplusChart(consumerSurplus, producerSurplus);
-        setTimeout(() => { simulate(maxDay) }, 10);
+        for (let eachSupplier of supplierList) {
+            const xPos = Math.random() * (animationField.offsetWidth - eachSupplier.divControlled.offsetWidth) + eachSupplier.divControlled.offsetWidth / 2;
+            const yPos = Math.random() * (animationField.offsetHeight - eachSupplier.divControlled.offsetHeight) + eachSupplier.divControlled.offsetHeight / 2;
+            eachSupplier.move(xPos, yPos);
+            if (!eachSupplier.newInMkt) {
+                eachSupplier.reask();
+                if (eachSupplier.dayToLive == 0) {
+                    // die and reborn
+                    let [a, b] = pm.genPayableSellable(false);
+                    eachSupplier.minSellable = b;
+                    eachSupplier.askPrice = eachSupplier.initAskPrice(true);
+                }
+            }
+        }
+
+        if (currentDay <= maxDay) {
+            currentDay++;
+            applyMarketEqChart(marketEqData);
+            applySuplusChart(consumerSurplus, producerSurplus);
+            setTimeout(() => { simulate(maxDay, pauseTime) }, pauseTime);
+        }
     }
 }
 
-simulate(150);
+simulate(50, pauseTime);
 
 function applyMarketEqChart(dataIn: (string | number)[][]): void {
     if (marketEqChart != null) {
@@ -190,7 +203,7 @@ function applySuplusChart(consumerSurplus: number, producerSurplus: number): voi
             },
             vAxis: {
                 minValue: 0,
-                maxValue: 200
+                maxValue: 30
             },
             bar: { groupWidth: "40%" },
             width: surplusChart.offsetWidth,

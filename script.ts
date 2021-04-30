@@ -3,6 +3,7 @@ import { PriceMachine } from './priceMachine.js';
 
 const animationField = document.getElementById("animation-field");
 const marketEqChart = document.getElementById("market-eq-chart");
+const surplusChart = document.getElementById("surplus-chart");
 
 function suffleArray(anArray: any[]): any[] {
     for (let i = anArray.length - 1; i > 0; i--) {
@@ -28,11 +29,15 @@ let numOfSupplier: number = 25;
 let consumerSurplus: number = 0;
 let producerSurplus: number = 0;
 
-// initialize consumers and supplier
+let currentDay: number = 1;
+
 let nodeDivSize: number = 0;
+// decide the size of each node
 if (animationField instanceof HTMLElement) {
     nodeDivSize = Math.min(animationField.offsetHeight, animationField.offsetWidth) / (numOfConsumer + numOfSupplier);
 }
+
+// initialize all consumers and supplier
 for (let i = 0; i < Math.max(numOfConsumer, numOfSupplier); i++) {
     let [a, b] = pm.genPayableSellable(false);
     if (i < numOfConsumer) {
@@ -61,8 +66,7 @@ for (let i = 0; i < Math.max(numOfConsumer, numOfSupplier); i++) {
 
     }
 }
-
-for (let i = 1; i <= 300; i++) {
+function simulate(maxDay: number) {
     // suffle consumer list and supplier list before matching them together
     consumerList = suffleArray(consumerList);
     supplierList = suffleArray(supplierList);
@@ -141,14 +145,15 @@ for (let i = 1; i <= 300; i++) {
             }
         }
     }
-}
-const consumerSurplusInfo = document.getElementById("consumer-surplus");
-const producerSurplusInfo = document.getElementById("producer-surplus");
-if (consumerSurplusInfo instanceof HTMLElement && producerSurplusInfo instanceof HTMLElement) {
-    consumerSurplusInfo.innerHTML = `Consumer Surplus: ${consumerSurplus}`;
-    producerSurplusInfo.innerHTML = `Producer Surplus: ${producerSurplus}`;
+    if (currentDay <= maxDay) {
+        currentDay++;
+        applyMarketEqChart(marketEqData);
+        applySuplusChart(consumerSurplus, producerSurplus);
+        setTimeout(() => { simulate(maxDay) }, 10);
+    }
 }
 
+simulate(150);
 
 function applyMarketEqChart(dataIn: (string | number)[][]): void {
     if (marketEqChart != null) {
@@ -163,12 +168,36 @@ function applyMarketEqChart(dataIn: (string | number)[][]): void {
             curveType: 'none',
             width: marketEqChart.offsetWidth,
             height: marketEqChart.offsetHeight,
-            // legend: { position: 'none' },
-            // hAxis: {
-            //     title: "Day"
-            // }
         };
         google.charts.setOnLoadCallback(() => drawSimulatedChart(dataIn, options, "LineChart", marketEqChart));
+    }
+}
+
+function applySuplusChart(consumerSurplus: number, producerSurplus: number): void {
+    if (surplusChart != null) {
+        google.charts.load('current', { 'packages': ['corechart', 'bar'] });
+        let dataIn = [
+            ["Surplus", "Value", { role: "style" }],
+            ["Consumer Surplus", consumerSurplus, "#4C8BF5"],
+            ["Market Value", producerSurplus, "#DE5246"],
+        ];
+        let options = {
+            title: 'Surplus',
+            titleTextStyle: {
+                fontSize: 14,
+                bold: true,
+                color: "#000"
+            },
+            vAxis: {
+                minValue: 0,
+                maxValue: 200
+            },
+            bar: { groupWidth: "40%" },
+            width: surplusChart.offsetWidth,
+            height: surplusChart.offsetHeight,
+            legend: { position: "none" }
+        };
+        google.charts.setOnLoadCallback(() => drawSimulatedChart(dataIn, options, "ColumnChart", surplusChart));
     }
 }
 
@@ -177,5 +206,3 @@ function drawSimulatedChart(dataIn: any[][], options: any, chartType: string, ta
     let chart = new google.visualization[chartType](targetDiv);
     chart.draw(data, options);
 }
-
-applyMarketEqChart(marketEqData);

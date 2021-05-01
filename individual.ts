@@ -1,13 +1,21 @@
 export class Individual {
     public divControlled: HTMLElement;
+    private _radius: number;
     private _newInMkt: boolean;
     private _dayToLive: number;
     private _aggressiveness: number;
     constructor(aDiv: HTMLElement) {
         this.divControlled = aDiv;
+        this._radius = 1.5;
         this._newInMkt = true;
         this._dayToLive = 20;
         this._aggressiveness = 0;
+    }
+    public get radius(): number {
+        return this._radius;
+    }
+    public set radius(r: number) {
+        this._radius = r;
     }
     public get newInMkt(): boolean {
         return this._newInMkt;
@@ -30,6 +38,15 @@ export class Individual {
     public move(xPos: number, yPos: number): void {
         this.divControlled.style.left = `${xPos - this.divControlled.offsetWidth / 2}px`;
         this.divControlled.style.top = `${yPos - this.divControlled.offsetHeight / 2}px`;
+    }
+    public goBack(field: HTMLElement): void {
+        const w = this.divControlled.offsetWidth;
+        const h = this.divControlled.offsetHeight;
+        const hPadding = (this.radius + 0.5) * this.divControlled.offsetWidth;
+        const vPadding = (this.radius + 0.5) * this.divControlled.offsetHeight;
+        const xPos = Math.random() * (field.offsetWidth - w - 2 * hPadding) + w / 2 + hPadding;
+        const yPos = Math.random() * (field.offsetHeight - h - 2 * vPadding) + h / 2 + vPadding;
+        this.move(xPos, yPos);
     }
     public oneTailNormalSample(mu: number, std: number, side: string): number {
         let u = 0, v = 0;
@@ -79,6 +96,16 @@ export class Consumer extends Individual {
             this._bidPrice += Math.min(delta, delta * this.oneTailNormalSample(0, 0.5, "right"));
             this.aggressiveness = 1 - this._bidPrice / this._maxPayable;
         }
+    }
+    public findSupplier(aSupplier: Supplier, radius: number = this.radius): void {
+        if (radius != this.radius) {
+            this.radius = radius;
+        }
+        const w = aSupplier.divControlled.offsetWidth;
+        const h = aSupplier.divControlled.offsetHeight;
+        const xPos = aSupplier.divControlled.offsetLeft - radius * w + Math.random() * (2 * radius + 1) * w;
+        const yPos = aSupplier.divControlled.offsetTop - radius * h + Math.random() * (2 * radius + 1) * h;
+        this.move(xPos, yPos);
     }
 }
 export class Supplier extends Individual {

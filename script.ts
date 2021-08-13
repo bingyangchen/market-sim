@@ -1,281 +1,227 @@
-import { Consumer, Supplier } from './individual.js';
+import { Consumer, Individual, Supplier } from './individual.js';
 import { PriceMachine } from './priceMachine.js';
+import { MyMath } from './myMath.js';
+import { DSCurveChart, MarketEqChart, SurplusChart } from './chart.js';
 
-const animationField = document.getElementById("animation-field");
-const marketEqChart = document.getElementById("market-eq-chart");
-const curveChart = document.getElementById("demand-supply-chart");
-const surplusChart = document.getElementById("surplus-chart");
-const startBtn = document.getElementById("start-btn");
-const resetBtn = document.getElementById("reset-btn");
-const initialEqInput = document.getElementById("initial-eq");
-const numOfConsumerInput = document.getElementById("number-of-consumer");
-const numOfSupplierInput = document.getElementById("number-of-supplier");
-const dayToSimulateInput = document.getElementById("day-to-simulate");
-const pauseTimeInput = document.getElementById("pause-time");
-const allTabs = document.getElementsByClassName("tab");
-const allInfoCharts = document.getElementsByClassName("info-chart");
+let animationField = document.getElementById("animation-field");
+let marketEqChart = document.getElementById("market-eq-chart");
+let marketEqChartDrawer: MarketEqChart;
+let curveChart = document.getElementById("demand-supply-chart");
+let curveChartDrawer: DSCurveChart;
+let surplusChart = document.getElementById("surplus-chart");
+let surplusChartDrawer: SurplusChart;
+let startBtn = document.getElementById("start-btn");
+let pauseBtn = document.getElementById("pause-btn");
+let resetBtn = document.getElementById("reset-btn");
+let initialEqInput = document.getElementById("initial-eq");
+let numOfConsumerInput = document.getElementById("number-of-consumer");
+let numOfSupplierInput = document.getElementById("number-of-supplier");
+let pauseTimeInput = document.getElementById("pause-time");
+let allTabs = document.getElementsByClassName("tab");
+let allInfoCharts = document.getElementsByClassName("info-chart");
 
 let marketEqData: (number | string)[][];
 let consumerList: Consumer[];
 let supplierList: Supplier[];
 let consumerSurplus: number;
 let producerSurplus: number;
-let currentDay: number;
+let shouldContinue: boolean;
 let pm: PriceMachine;
 let nodeDivSize: number;
-
-function suffleArray(anArray: any[]): any[] {
-    for (let i = anArray.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        const temp = anArray[i];
-        anArray[i] = anArray[j];
-        anArray[j] = temp;
-    }
-    return anArray;
-}
-
-function avg(arr: number[]): number {
-    return arr.reduce((prev: number, curr: number) => prev + curr, 0) / arr.length;
-}
 
 function createNodeDiv(pauseTime: number): HTMLElement {
     let nodeDiv = document.createElement("div");
     nodeDiv.className = "node";
     nodeDiv.style.width = `${nodeDivSize}px`;
     nodeDiv.style.height = `${nodeDivSize}px`;
-    nodeDiv.style.transitionDuration = `${pauseTime / 2}ms`;
-    if (animationField != null) {
-        animationField.appendChild(nodeDiv);
-    }
+    nodeDiv.style.transitionDuration = `${pauseTime / 4}ms`;
+    if (animationField !== null) animationField.appendChild(nodeDiv);
     return nodeDiv;
 }
 
-function preset(initialEq: number, numOfConsumer: number, numOfSupplier: number, pauseTime: number): void {
-    pm = new PriceMachine(initialEq, 20);
-
-    nodeDivSize = 0;
-    // decide the size of each node
-    if (animationField instanceof HTMLElement) {
-        nodeDivSize = Math.min(animationField.offsetHeight, animationField.offsetWidth) / (numOfConsumer + numOfSupplier) ** 0.7;
-    }
-
-    // initialize all consumers and supplier
+function initAllIndivuduals(numOfConsumer: number, numOfSupplier: number, pauseTime: number): void {
     for (let i = 0; i < Math.max(numOfConsumer, numOfSupplier); i++) {
-        let [a, b] = pm.genPayableSellable(false);
+        let [a, b] = pm.genPayableSellable();
         if (i < numOfConsumer) {
-            const nodeDiv = createNodeDiv(pauseTime);
-            let c: Consumer = new Consumer(nodeDiv, a);
-            consumerList.push(c);
+            let nodeDiv = createNodeDiv(pauseTime);
+            consumerList.push(new Consumer(nodeDiv, a));
         }
         if (i < numOfSupplier) {
-            const nodeDiv = createNodeDiv(pauseTime);
-            let s: Supplier = new Supplier(nodeDiv, b);
-            supplierList.push(s);
+            let nodeDiv = createNodeDiv(pauseTime);
+            supplierList.push(new Supplier(nodeDiv, b));
         }
     }
 }
 
-function simulate(initialEq: number, maxDay: number, pauseTime: number): void {
-    if (animationField != null) {
-        // prepare demand/supply curve data
-        let allBidPrices: number[] = [];
-        let allAskPrices: number[] = [];
-        for (let eachConsumer of consumerList) allBidPrices.push(eachConsumer.bidPrice);
-        for (let eachSupplier of supplierList) allAskPrices.push(eachSupplier.askPrice);
-        let maxNumInChart = initialEq * 2;
-        let minNumInChart = 0;
-        let delta = maxNumInChart - minNumInChart
-        let priceSequence: number[] = [];
-        for (let i = 0; i < 50; i++) {
-            priceSequence.push(minNumInChart + delta / 50 * i)
-        }
-        let curveData: (number[] | string[])[] = [["price", "D", "S"]];
-        for (let each of priceSequence) {
-            let qd = 0;
-            let qs = 0;
-            for (let eachBidPrice of allBidPrices) {
-                if (eachBidPrice >= each) qd++;
-            }
-            for (let eachAskPrice of allAskPrices) {
-                if (eachAskPrice <= each) qs++;
-            }
-            curveData.push([each, qd, qs]);
-        }
-        applyCurveChart(curveData);
+function drawDSCurveChart(initialEq: number): void {
+    // prepare demand/supply curve data
+    let allBidPrices: number[] = [];
+    let allAskPrices: number[] = [];
+    for (let eachConsumer of consumerList) allBidPrices.push(eachConsumer.bidPrice);
+    for (let eachSupplier of supplierList) allAskPrices.push(eachSupplier.askPrice);
 
-        // suffle consumer list and supplier list before matching them together
-        consumerList = suffleArray(consumerList);
-        supplierList = suffleArray(supplierList);
+    // sort allBidPrices in descending order
+    allBidPrices.sort((a: number, b: number) => b - a);
+    // sort allAskPrices in ascending order
+    allAskPrices.sort((a: number, b: number) => a - b);
 
-        // matching each consumer to each supplier
-        for (let i = 0; i < consumerList.length; i++) {
-            supplierList[i % supplierList.length].descendingQueueAConsumer(consumerList[i]);
-            setTimeout(() => {
-                consumerList[i].findSupplier(supplierList[i % supplierList.length]);
-            }, pauseTime / 2);
-        }
+    // prepare demand/supply curve data
+    let allPayable: number[] = [];
+    let allSellable: number[] = [];
+    for (let eachConsumer of consumerList) allPayable.push(eachConsumer.maxPayable);
+    for (let eachSupplier of supplierList) allSellable.push(eachSupplier.minSellable);
 
-        let dealPriceToday: number[] = [];
-        // check if deal
-        for (let eachSupplier of supplierList) {
-            eachSupplier.newInMkt = false;
-            let paired: boolean = false;
-            for (let eachConsumer of eachSupplier.consumerQueue) {
-                eachConsumer.newInMkt = false;
-                if (!paired) {
-                    if (eachConsumer.bidPrice > eachSupplier.askPrice) {
-                        let dealPrice = (eachConsumer.bidPrice + eachSupplier.askPrice) / 2;
-                        dealPriceToday.push(dealPrice);
-                        consumerSurplus += (eachConsumer.maxPayable - dealPrice);
-                        producerSurplus += (dealPrice - eachSupplier.minSellable);
-                        // generate a new pair of prices
-                        let [a, b] = pm.genPayableSellable(true);
+    // sort allPayable in descending order
+    allPayable.sort((a: number, b: number) => b - a);
+    // sort allSellable in ascending order
+    allSellable.sort((a: number, b: number) => a - b);
 
-                        eachConsumer.maxPayable = a;
-                        eachConsumer.bidPrice = eachConsumer.initBidPrice(false);
-
-                        eachSupplier.minSellable = b;
-                        eachSupplier.askPrice = eachSupplier.initAskPrice(false);
-
-                        paired = true;
-                    }
-                }
-            }
-        }
-
-        // record equilibrium and given-costs/utility if any deal happened today 
-        if (dealPriceToday.length > 0) {
-            marketEqData.push([marketEqData.length, pm.equilibrium, avg(dealPriceToday)]);
+    let curveData: (number[] | string[])[] = [["Q", "D", "S", "DD", "SS"]];
+    let maxLoop = Math.max(allBidPrices.length, allAskPrices.length);
+    for (let q = 0; q < maxLoop; q++) {
+        let pd = 0, ps = 0;
+        let payable = 0, sellable = 0;
+        if (q < allBidPrices.length) {
+            pd = allBidPrices[q];
+            payable = allPayable[q];
         } else {
-            if (marketEqData.length == 1) {
-                marketEqData.push([marketEqData.length, pm.equilibrium, initialEq]);
-            } else {
-                marketEqData.push([marketEqData.length, pm.equilibrium, marketEqData[marketEqData.length - 1][2]]);
-            }
+            pd = allBidPrices[allBidPrices.length - 1];
+            payable = allPayable[allPayable.length - 1];
         }
-
-        // clear the consumer queue of all supplier
-        for (let eachSupplier of supplierList) {
-            eachSupplier.consumerQueue = [];
+        if (q < allAskPrices.length) {
+            ps = allAskPrices[q];
+            sellable = allSellable[q];
+        } else {
+            ps = allAskPrices[allAskPrices.length - 1];
+            sellable = allSellable[allSellable.length - 1];
         }
+        curveData.push([q, pd, ps, payable, sellable]);
+    }
+    curveChartDrawer.drawChart(curveData, initialEq);
+}
 
-        // go back and rebid/reask 
+function deal(c: Consumer, s: Supplier): void {
+    c.deal();
+    s.deal();
+}
+
+function match(phase: number, cList: Consumer[], sList: Supplier[], pauseTime: number, dealPriceToday: number[]): { "undealtCList": Consumer[], "undealtSList": Supplier[], "dealPriceToday": number[] } {
+    // suffle consumer list and supplier list before matching
+    cList = MyMath.suffleArray(cList);
+    sList = MyMath.suffleArray(sList);
+    for (let i = 0; i < cList.length; i++) {
+        let consumerSelected = cList[i];
+        let j = i % sList.length;
+        let supplierFound = sList[j];
+        setTimeout(() => {
+            consumerSelected.findSupplier(supplierFound);
+        }, pauseTime / 4 * phase);
+        let supplierResponse = supplierFound.decideWhetherToSell(consumerSelected);
+        if (supplierResponse === "accept") {
+            deal(consumerSelected, supplierFound);
+            // Record Consumer and Supplier Surplus
+            let dealPrice = (consumerSelected.bidPrice + supplierFound.askPrice) / 2;
+            dealPriceToday.push(dealPrice);
+            consumerSurplus += (consumerSelected.maxPayable - dealPrice);
+            producerSurplus += (dealPrice - supplierFound.minSellable);
+        }
+    }
+    let undealtCList: Consumer[] = [];
+    let undealtSList: Supplier[] = [];
+    for (let each of consumerList) {
+        if (!each.dealt) undealtCList.push(each);
+    }
+    for (let each of supplierList) {
+        if (!each.dealt) undealtSList.push(each);
+    }
+    return {
+        "undealtCList": undealtCList,
+        "undealtSList": undealtSList,
+        "dealPriceToday": dealPriceToday
+    }
+}
+
+function simulate(initialEq: number, pauseTime: number): void {
+    if (animationField !== null) {
+        // everyone go to the market
         for (let eachConsumer of consumerList) {
-            eachConsumer.goBack(animationField);
-            if (!eachConsumer.newInMkt) {
-                eachConsumer.rebid();
-                if (eachConsumer.dayToLive == 0) {
-                    // die and reborn
-                    let [a, b] = pm.genPayableSellable(false);
-                    eachConsumer.maxPayable = a;
-                    eachConsumer.bidPrice = eachConsumer.initBidPrice(true);
-                }
-            }
+            setTimeout(() => {
+                if (animationField !== null) eachConsumer.goToMarket(animationField);
+            }, 0);
         }
         for (let eachSupplier of supplierList) {
-            eachSupplier.goBack(animationField);
-            if (!eachSupplier.newInMkt) {
-                eachSupplier.reask();
-                if (eachSupplier.dayToLive == 0) {
-                    // die and reborn
-                    let [a, b] = pm.genPayableSellable(false);
-                    eachSupplier.minSellable = b;
-                    eachSupplier.askPrice = eachSupplier.initAskPrice(true);
-                }
+            setTimeout(() => {
+                if (animationField !== null) eachSupplier.goToMarket(animationField);
+            }, 0);
+        }
+
+        drawDSCurveChart(initialEq);
+        let dealPriceToday: number[] = [];
+
+        // Phase 1: matching each consumer to each supplier
+        let matchResult1: any = match(1, consumerList, supplierList, pauseTime, dealPriceToday);
+        let consumerListAfterPhase1: Consumer[] = matchResult1.undealtCList;
+        let supplierListAfterPahse1: Supplier[] = matchResult1.undealtSList;
+        dealPriceToday = matchResult1.dealPriceToday;
+
+        // Phase 2: those un-dealt consumer go finding another un-dealt supplier
+        let matchResult2: any = match(2, consumerListAfterPhase1, supplierListAfterPahse1, pauseTime, dealPriceToday);
+        let consumerListAfterPhase2: Consumer[] = matchResult2.undealtCList;
+        let supplierListAfterPahse2: Supplier[] = matchResult2.undealtSList;
+        dealPriceToday = matchResult2.dealPriceToday;
+        console.log(supplierList.length, supplierListAfterPahse1.length, supplierListAfterPahse2.length);
+
+        // Phase 3: Record Fail to Deal
+        for (let each of consumerListAfterPhase2) each.faildToDeal();
+        for (let each of supplierListAfterPahse2) each.faildToDeal();
+
+        // Phase 4: Everyone go back and rebid/reask 
+        for (let eachConsumer of consumerList) {
+            setTimeout(() => {
+                if (animationField !== null) eachConsumer.goBack(animationField);
+            }, pauseTime / 4 * 3);
+            eachConsumer.dealt = false;
+            eachConsumer.bid();
+        }
+        for (let eachSupplier of supplierList) {
+            setTimeout(() => {
+                if (animationField !== null) eachSupplier.goBack(animationField);
+            }, pauseTime / 4 * 3);
+            eachSupplier.dealt = false;
+            eachSupplier.ask();
+        }
+
+        // Record Market Equillibrium
+        if (dealPriceToday.length > 0) {
+            marketEqData.push([marketEqData.length, MyMath.avg(dealPriceToday)]);
+        } else {
+            if (marketEqData.length === 1) marketEqData.push([marketEqData.length, initialEq]);
+            else {
+                marketEqData.push([marketEqData.length, marketEqData[marketEqData.length - 1][2]]);
             }
         }
-
-        if (currentDay <= maxDay) {
-            currentDay++;
-            applyMarketEqChart(marketEqData);
-
-            applySuplusChart(consumerSurplus, producerSurplus);
-            setTimeout(() => { simulate(initialEq, maxDay, pauseTime) }, pauseTime);
-        } else {
-            enableControl();
-        }
+        marketEqChartDrawer.drawChart(marketEqData);
+        surplusChartDrawer.drawChart(consumerSurplus, producerSurplus);
+        if (shouldContinue) {
+            // prevent memory leak
+            consumerListAfterPhase1.length = 0;
+            consumerListAfterPhase2.length = 0;
+            supplierListAfterPahse1.length = 0;
+            supplierListAfterPahse2.length = 0;
+            dealPriceToday.length = 0;
+            matchResult1 = undefined;
+            matchResult1 = undefined;
+            setTimeout(() => simulate(initialEq, pauseTime), pauseTime);
+        } else enableControl();
     }
-}
-
-function applyMarketEqChart(dataIn: (string | number)[][]): void {
-    if (marketEqChart != null) {
-        google.charts.load('current', { 'packages': ["corechart"] });
-        let options = {
-            title: 'Given Price vs. Market Equilibrium',
-            titleTextStyle: {
-                fontSize: 16,
-                bold: false,
-                color: "#777"
-            },
-            curveType: 'none',
-            width: marketEqChart.offsetWidth,
-            height: marketEqChart.offsetHeight,
-        };
-        google.charts.setOnLoadCallback(() => drawSimulatedChart(dataIn, options, "LineChart", marketEqChart));
-    }
-}
-
-function applyCurveChart(dataIn: (string | number)[][]): void {
-    if (curveChart != null) {
-        google.charts.load('current', { 'packages': ["corechart"] });
-        let options = {
-            title: 'Demand / Supply Curve',
-            titleTextStyle: {
-                fontSize: 14,
-                bold: false,
-                color: "#777"
-            },
-            curveType: 'none',
-            width: curveChart.offsetWidth,
-            height: curveChart.offsetHeight,
-            vAxis: { title: 'Q' },
-            hAxis: { title: 'P' }
-        };
-        google.charts.setOnLoadCallback(() => drawSimulatedChart(dataIn, options, "LineChart", curveChart));
-    }
-}
-
-function applySuplusChart(consumerSurplus: number, producerSurplus: number): void {
-    if (surplusChart != null) {
-        google.charts.load('current', { 'packages': ['corechart', 'bar'] });
-        let dataIn = [
-            ["Surplus", "Value", { role: "style" }],
-            ["Consumer Surplus", consumerSurplus, "#4C8BF5"],
-            ["Producer Surplus", producerSurplus, "#DE5246"],
-        ];
-        let options = {
-            title: 'Surplus',
-            titleTextStyle: {
-                fontSize: 14,
-                bold: true,
-                color: "#000"
-            },
-            vAxis: {
-                minValue: 0,
-                maxValue: 30
-            },
-            bar: { groupWidth: "40%" },
-            width: surplusChart.offsetWidth,
-            height: surplusChart.offsetHeight,
-            legend: { position: "none" }
-        };
-        google.charts.setOnLoadCallback(() => drawSimulatedChart(dataIn, options, "ColumnChart", surplusChart));
-    }
-}
-
-function drawSimulatedChart(dataIn: any[][], options: any, chartType: string, targetDiv: HTMLElement | null): void {
-    let data = google.visualization.arrayToDataTable(dataIn);
-    let chart = new google.visualization[chartType](targetDiv);
-    chart.draw(data, options);
 }
 
 function enableControl(): void {
-    if (startBtn instanceof HTMLButtonElement && initialEqInput instanceof HTMLInputElement && numOfConsumerInput instanceof HTMLInputElement && numOfSupplierInput instanceof HTMLInputElement && dayToSimulateInput instanceof HTMLInputElement && pauseTimeInput instanceof HTMLInputElement) {
+    if (startBtn instanceof HTMLButtonElement && initialEqInput instanceof HTMLInputElement && numOfConsumerInput instanceof HTMLInputElement && numOfSupplierInput instanceof HTMLInputElement && pauseTimeInput instanceof HTMLInputElement) {
         startBtn.disabled = false;
         initialEqInput.disabled = false;
         numOfConsumerInput.disabled = false;
         numOfSupplierInput.disabled = false;
-        dayToSimulateInput.disabled = false;
         pauseTimeInput.disabled = false;
     }
 }
@@ -288,7 +234,7 @@ function controlTab(): void {
 
 function highlightTab(e: Event): void {
     for (let i = 0; i < allTabs.length; i++) {
-        if (allTabs[i] == e.currentTarget && allInfoCharts[i] instanceof HTMLElement) {
+        if (allTabs[i] === e.currentTarget && allInfoCharts[i] instanceof HTMLElement) {
             allTabs[i].classList.add("active");
             allInfoCharts[i].classList.add("active");
         } else {
@@ -297,45 +243,44 @@ function highlightTab(e: Event): void {
         }
     }
 }
-
-controlTab();
-
-if (initialEqInput instanceof HTMLInputElement && numOfConsumerInput instanceof HTMLInputElement && numOfSupplierInput instanceof HTMLInputElement && dayToSimulateInput instanceof HTMLInputElement && pauseTimeInput instanceof HTMLInputElement) {
-    initialEqInput.value = "100";
-    numOfConsumerInput.value = "30";
-    numOfSupplierInput.value = "30";
-    dayToSimulateInput.value = "100";
-    pauseTimeInput.value = "1000";
-}
-
-if (startBtn instanceof HTMLButtonElement && animationField != null) {
-    startBtn.addEventListener("click", () => {
+function start(): void {
+    if (startBtn instanceof HTMLButtonElement && animationField !== null && marketEqChart instanceof HTMLElement && surplusChart instanceof HTMLElement && curveChart instanceof HTMLElement) {
+        marketEqChartDrawer = new MarketEqChart(marketEqChart);
+        curveChartDrawer = new DSCurveChart(curveChart);
+        surplusChartDrawer = new SurplusChart(surplusChart);
         animationField.innerHTML = "";
-        marketEqData = [["Day", "Given Price", "Mkt. Eq."]];
+        marketEqData = [["Day", "Mkt. Eq."]];
         consumerList = [];
         supplierList = [];
         consumerSurplus = 0;
         producerSurplus = 0;
-        currentDay = 1;
-
+        shouldContinue = true;
+        nodeDivSize = 20;
         startBtn.disabled = true;
-        if (initialEqInput instanceof HTMLInputElement && numOfConsumerInput instanceof HTMLInputElement && numOfSupplierInput instanceof HTMLInputElement && dayToSimulateInput instanceof HTMLInputElement && pauseTimeInput instanceof HTMLInputElement) {
+        if (initialEqInput instanceof HTMLInputElement && numOfConsumerInput instanceof HTMLInputElement && numOfSupplierInput instanceof HTMLInputElement && pauseTimeInput instanceof HTMLInputElement) {
             let initialEq: number = parseInt(initialEqInput.value);
             let numOfConsumer: number = parseInt(numOfConsumerInput.value);
             let numOfSupplier: number = parseInt(numOfSupplierInput.value);
-            let dayToSimulate: number = parseInt(dayToSimulateInput.value);
             let pauseTime: number = parseInt(pauseTimeInput.value);
             initialEqInput.disabled = true;
             numOfConsumerInput.disabled = true;
             numOfSupplierInput.disabled = true;
-            dayToSimulateInput.disabled = true;
             pauseTimeInput.disabled = true;
-            preset(initialEq, numOfConsumer, numOfSupplier, pauseTime);
-            simulate(initialEq, dayToSimulate, pauseTime);
+            pm = new PriceMachine(initialEq);
+            initAllIndivuduals(numOfConsumer, numOfSupplier, pauseTime);
+            simulate(initialEq, pauseTime);
         }
-    });
+    }
 }
-
-if (resetBtn != null) {
-    resetBtn.addEventListener("click", () => { location.reload() });
+if (initialEqInput instanceof HTMLInputElement && numOfConsumerInput instanceof HTMLInputElement && numOfSupplierInput instanceof HTMLInputElement && pauseTimeInput instanceof HTMLInputElement) {
+    initialEqInput.value = "100";
+    numOfConsumerInput.value = "30";
+    numOfSupplierInput.value = "30";
+    pauseTimeInput.value = "40";
 }
+if (startBtn !== null && resetBtn !== null && pauseBtn !== null) {
+    startBtn.addEventListener("click", () => start());
+    pauseBtn.addEventListener("click", () => shouldContinue = false);
+    resetBtn.addEventListener("click", () => location.reload());
+}
+controlTab();

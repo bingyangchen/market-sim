@@ -5,8 +5,8 @@ export class PriceMachine {
         this._equilibrium = initialEq;
     }
     public genPayableSellable(): [number, number] {
-        const a = Math.max(0.1, MyMath.normalSample(this._equilibrium, this._equilibrium / 2));
-        const b = Math.max(0.1, MyMath.normalSample(this._equilibrium, this._equilibrium / 2));
+        const a = Math.max(1, MyMath.normalSample(this._equilibrium, this._equilibrium / 2));
+        const b = Math.max(1, MyMath.normalSample(this._equilibrium, this._equilibrium / 2));
         return [a, b];
     }
 }

@@ -67,6 +67,7 @@ export class DSCurveChart extends MyGoogleChart {
     }
 }
 export class SurplusChart extends MyGoogleChart {
+    private _vAxisMax: number = 0;
     public constructor(chartDiv: HTMLElement) {
         super(chartDiv);
         this._chartType = "ColumnChart";
@@ -82,11 +83,14 @@ export class SurplusChart extends MyGoogleChart {
                 ["Consumer Surplus", consumerSurplus, "#4C8BF5"],
                 ["Producer Surplus", producerSurplus, "#DE5246"],
             ];
+            this._vAxisMax = Math.max(consumerSurplus, producerSurplus, this._vAxisMax);
             let data = google.visualization.arrayToDataTable(dataIn);
             let option = {
                 vAxis: {
-                    minValue: 0,
-                    maxValue: 30
+                    viewWindow: {
+                        max: this._vAxisMax,
+                        min: 0
+                    }
                 },
                 bar: { groupWidth: "40%" },
                 width: this._chartDiv.offsetWidth,

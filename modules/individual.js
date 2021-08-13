@@ -26,10 +26,10 @@ export class Individual {
     }
     deal() {
         this._dealt = true;
-        this._aggressiveness *= 1.05;
+        this._aggressiveness *= 1.1;
     }
     faildToDeal() {
-        this._aggressiveness *= 0.95;
+        this._aggressiveness *= 0.9;
     }
 }
 export class Consumer extends Individual {

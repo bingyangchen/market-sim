@@ -76,7 +76,7 @@ function drawDSCurveChart(initialEq: number): void {
     // sort allSellable in ascending order
     allSellable.sort((a: number, b: number) => a - b);
 
-    let curveData: (number[] | string[])[] = [["Q", "D", "S", "DD", "SS"]];
+    let curveData: (number[] | string[])[] = [["Q", "d", "s", "D", "S"]];
     let maxLoop = Math.max(allBidPrices.length, allAskPrices.length);
     for (let q = 0; q < maxLoop; q++) {
         let pd = 0, ps = 0;
@@ -105,7 +105,7 @@ function deal(c: Consumer, s: Supplier): void {
     s.deal();
 }
 
-function match(phase: number, cList: Consumer[], sList: Supplier[], pauseTime: number, dealPriceToday: number[]): { "undealtCList": Consumer[], "undealtSList": Supplier[], "dealPriceToday": number[] } {
+function match(phase: number, cList: Consumer[], sList: Supplier[], pauseTime: number, dealPriceToday: { "price": number, "minDelta": number }): { "undealtCList": Consumer[], "undealtSList": Supplier[], "dealPriceToday": { "price": number, "minDelta": number } } {
     // suffle consumer list and supplier list before matching
     cList = MyMath.suffleArray(cList);
     sList = MyMath.suffleArray(sList);
@@ -119,9 +119,14 @@ function match(phase: number, cList: Consumer[], sList: Supplier[], pauseTime: n
         let supplierResponse = supplierFound.decideWhetherToSell(consumerSelected);
         if (supplierResponse === "accept") {
             deal(consumerSelected, supplierFound);
+
             // Record Consumer and Supplier Surplus
             let dealPrice = (consumerSelected.bidPrice + supplierFound.askPrice) / 2;
-            dealPriceToday.push(dealPrice);
+            let delta = consumerSelected.bidPrice - dealPrice;
+            if (delta < dealPriceToday.minDelta) {
+                dealPriceToday.price = dealPrice;
+                dealPriceToday.minDelta = delta;
+            }
             consumerSurplus += (consumerSelected.maxPayable - dealPrice);
             producerSurplus += (dealPrice - supplierFound.minSellable);
         }
@@ -142,6 +147,8 @@ function match(phase: number, cList: Consumer[], sList: Supplier[], pauseTime: n
 }
 
 function simulate(initialEq: number, pauseTime: number): void {
+    consumerSurplus = 0;
+    producerSurplus = 0;
     if (animationField !== null) {
         // everyone go to the market
         for (let eachConsumer of consumerList) {
@@ -156,7 +163,7 @@ function simulate(initialEq: number, pauseTime: number): void {
         }
 
         drawDSCurveChart(initialEq);
-        let dealPriceToday: number[] = [];
+        let dealPriceToday: any = { "price": 0, "minDelta": Infinity };
 
         // Phase 1: matching each consumer to each supplier
         let matchResult1: any = match(1, consumerList, supplierList, pauseTime, dealPriceToday);
@@ -169,7 +176,6 @@ function simulate(initialEq: number, pauseTime: number): void {
         let consumerListAfterPhase2: Consumer[] = matchResult2.undealtCList;
         let supplierListAfterPahse2: Supplier[] = matchResult2.undealtSList;
         dealPriceToday = matchResult2.dealPriceToday;
-        console.log(supplierList.length, supplierListAfterPahse1.length, supplierListAfterPahse2.length);
 
         // Phase 3: Record Fail to Deal
         for (let each of consumerListAfterPhase2) each.faildToDeal();
@@ -192,8 +198,9 @@ function simulate(initialEq: number, pauseTime: number): void {
         }
 
         // Record Market Equillibrium
-        if (dealPriceToday.length > 0) {
-            marketEqData.push([marketEqData.length, MyMath.avg(dealPriceToday)]);
+        if (dealPriceToday.price > 0) {
+            // marketEqData.push([marketEqData.length, MyMath.avg(dealPriceToday)]);
+            marketEqData.push([marketEqData.length, dealPriceToday.price]);
         } else {
             if (marketEqData.length === 1) marketEqData.push([marketEqData.length, initialEq]);
             else {
@@ -208,7 +215,7 @@ function simulate(initialEq: number, pauseTime: number): void {
             consumerListAfterPhase2.length = 0;
             supplierListAfterPahse1.length = 0;
             supplierListAfterPahse2.length = 0;
-            dealPriceToday.length = 0;
+            dealPriceToday = undefined;
             matchResult1 = undefined;
             matchResult1 = undefined;
             setTimeout(() => simulate(initialEq, pauseTime), pauseTime);

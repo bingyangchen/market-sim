@@ -171,12 +171,12 @@ function simulate(initialEq, pauseTime) {
         let consumerListAfterPhase2 = matchResult2.undealtCList;
         let supplierListAfterPahse2 = matchResult2.undealtSList;
         dealPriceToday = matchResult2.dealPriceToday;
-        // Phase 3: Record Fail to Deal
+        // Record Fail to Deal
         for (let each of consumerListAfterPhase2)
             each.faildToDeal();
         for (let each of supplierListAfterPahse2)
             each.faildToDeal();
-        // Phase 4: Everyone go back and rebid/reask 
+        // Everyone go back and rebid/reask 
         for (let eachConsumer of consumerList) {
             setTimeout(() => {
                 if (animationField !== null)

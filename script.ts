@@ -12,9 +12,10 @@ let surplusChart = document.getElementById("surplus-chart");
 let surplusChartDrawer: SurplusChart;
 let runPauseBtn = document.getElementById("run-pause-btn");
 let clearBtn = document.getElementById("clear-btn");
-let initialEqInput = document.getElementById("initial-eq");
 let numOfConsumerInput = document.getElementById("number-of-consumer");
+let numOfConsumerShow = document.getElementById("consumer-num-show");
 let numOfSupplierInput = document.getElementById("number-of-supplier");
+let numOfSupplierShow = document.getElementById("supplier-num-show");
 let pauseTimeInput = document.getElementById("pause-time");
 let allTabs = document.getElementsByClassName("tab");
 let allInfoCharts = document.getElementsByClassName("info-chart");
@@ -242,18 +243,14 @@ function simulate(): void {
     }
 }
 
-function enableControl(): void {
-    if (initialEqInput instanceof HTMLInputElement && numOfConsumerInput instanceof HTMLInputElement && numOfSupplierInput instanceof HTMLInputElement && pauseTimeInput instanceof HTMLInputElement) {
-        initialEqInput.disabled = false;
-        numOfConsumerInput.disabled = false;
-        numOfSupplierInput.disabled = false;
+function enableAllUserInputs(): void {
+    if (pauseTimeInput instanceof HTMLInputElement) {
         pauseTimeInput.disabled = false;
     }
 }
 
-function disableControl(): void {
-    if (initialEqInput instanceof HTMLInputElement && pauseTimeInput instanceof HTMLInputElement) {
-        initialEqInput.disabled = true;
+function disableAllUserInputs(): void {
+    if (pauseTimeInput instanceof HTMLInputElement) {
         pauseTimeInput.disabled = true;
     }
 }
@@ -271,9 +268,7 @@ function highlightTab(e: Event): void {
 }
 
 function initAllUserInputs(): void {
-    if (initialEqInput instanceof HTMLInputElement && numOfConsumerInput instanceof HTMLInputElement && numOfSupplierInput instanceof HTMLInputElement && pauseTimeInput instanceof HTMLInputElement) {
-        initialEqInput.value = "100";
-
+    if (numOfConsumerInput instanceof HTMLInputElement && numOfSupplierInput instanceof HTMLInputElement && pauseTimeInput instanceof HTMLInputElement) {
         numOfConsumerInput.min = "1";
         numOfConsumerInput.max = "300";
         numOfConsumerInput.step = "1";
@@ -289,8 +284,7 @@ function initAllUserInputs(): void {
 }
 
 function readAllUserInputs(): void {
-    if (initialEqInput instanceof HTMLInputElement && numOfConsumerInput instanceof HTMLInputElement && numOfSupplierInput instanceof HTMLInputElement && pauseTimeInput instanceof HTMLInputElement) {
-        initialEq = parseInt(initialEqInput.value);
+    if (pauseTimeInput instanceof HTMLInputElement) {
         pauseTime = parseInt(pauseTimeInput.value);
     }
 }
@@ -298,7 +292,8 @@ function readAllUserInputs(): void {
 function start(e: Event): void {
     if (animationField !== null && marketEqChart instanceof HTMLElement && surplusChart instanceof HTMLElement && curveChart instanceof HTMLElement) {
         readAllUserInputs();
-        disableControl();
+        disableAllUserInputs();
+        initialEq = 100;
         pm = new PriceMachine(initialEq);
         marketEqChartDrawer = new MarketEqChart(marketEqChart);
         curveChartDrawer = new DSCurveChart(curveChart);
@@ -310,9 +305,8 @@ function start(e: Event): void {
         consumerSurplus = 0;
         producerSurplus = 0;
         nodeDivSize = 20;
-        shouldContinue = true;
-        changeRunBtnToPauseBtn();
-        simulate(); //recursive function
+
+        continueToRun();
     }
 }
 
@@ -335,7 +329,7 @@ function pause(e: Event): void {
     changePauseBtnToContinueBtn();
 }
 
-function continueToRun(e: Event): void {
+function continueToRun(): void {
     shouldContinue = true;
     changeRunBtnToPauseBtn();
     simulate(); //recursive function
@@ -358,15 +352,31 @@ function changePauseBtnToContinueBtn(): void {
     }
 }
 
+function updateConsumerNum() {
+    if (numOfConsumerShow !== null && numOfConsumerInput instanceof HTMLInputElement) {
+        numOfConsumerShow.innerHTML = numOfConsumerInput.value;
+    }
+}
+
+function updateSupplierNum() {
+    if (numOfSupplierShow !== null && numOfSupplierInput instanceof HTMLInputElement) {
+        numOfSupplierShow.innerHTML = numOfSupplierInput.value;
+    }
+}
+
 function addAllEventListeners(): void {
     for (let each of allTabs) {
         if (each instanceof HTMLElement) each.addEventListener("click", highlightTab);
     }
-    if (runPauseBtn !== null && clearBtn !== null && numOfConsumerInput !== null) {
+    if (runPauseBtn !== null && clearBtn !== null && numOfConsumerInput !== null && numOfSupplierInput !== null) {
+        numOfConsumerInput.addEventListener("input", updateConsumerNum);
+        numOfSupplierInput.addEventListener("input", updateSupplierNum);
         runPauseBtn.addEventListener("click", start);
         clearBtn.addEventListener("click", () => location.reload());
     }
 }
 
 initAllUserInputs();
+updateConsumerNum();
+updateSupplierNum();
 addAllEventListeners();

@@ -148,7 +148,7 @@ body {
 }
 
 #parameter-field {
-    width: fit-content;
+    width: 75%;
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -161,16 +161,17 @@ body {
     padding: 5px 10px;
 }
 
-#parameter-field>div>div {
-    width: 100px;
+#parameter-field>div>span {
+    min-width: max-content;
+    margin: 0 10px
 }
 
 #parameter-field>div>input {
-    width: 120px;
+    width: 100%;
 }
 
 #btn-field {
-    width: 100%;
+    width: 25%;
     display: flex;
     flex-direction: column;
     justify-content: center;

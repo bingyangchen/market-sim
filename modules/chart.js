@@ -17,16 +17,17 @@ export class MarketEqChart extends MyGoogleChart {
         if (google.visualization !== undefined && this._chart !== undefined) {
             let data = google.visualization.arrayToDataTable(dataIn);
             let option = {
-                // title: 'Given Price vs. Market Equilibrium',
-                // titleTextStyle: {
-                //     fontSize: 16,
-                //     bold: false,
-                //     color: "#777"
-                // },
+                title: 'Market Equilibrium',
+                titleTextStyle: {
+                    fontSize: 16,
+                    bold: false,
+                    color: "#777"
+                },
                 curveType: 'none',
+                legend: { position: "none" },
                 width: this._chartDiv.offsetWidth,
                 height: this._chartDiv.offsetHeight,
-                chartArea: { left: "10%", top: "5%", width: '70%', height: '80%' }
+                chartArea: { left: "10%", top: "15%", width: '80%', height: '70%' }
             };
             this._chart.draw(data, option);
         }

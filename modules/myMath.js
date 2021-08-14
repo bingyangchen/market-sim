@@ -13,6 +13,12 @@ export class MyMath {
             return 0;
         return arr.reduce((a, b) => a + b, 0) / arr.length;
     }
+    static mid(arr) {
+        if (arr.length === 0)
+            return 0;
+        arr.sort((a, b) => b - a);
+        return arr[Math.floor((arr.length - 1) / 2)];
+    }
     static normalSample(mu, std) {
         let u = 0, v = 0;
         while (u === 0)

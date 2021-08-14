@@ -28,8 +28,6 @@ let shouldContinue: boolean;
 let pm: PriceMachine;
 let nodeDivSize: number;
 let initialEq: number;
-let numOfConsumer: number;
-let numOfSupplier: number;
 let pauseTime: number;
 
 function createNodeDiv(): HTMLElement {
@@ -42,14 +40,14 @@ function createNodeDiv(): HTMLElement {
     return nodeDiv;
 }
 
-function createAllIndivuduals(): void {
-    for (let i = 0; i < Math.max(numOfConsumer, numOfSupplier); i++) {
+function createIndivuduals(cNum: number, sNum: number): void {
+    for (let i = 0; i < Math.max(cNum, sNum); i++) {
         let [a, b] = pm.genPayableSellable();
-        if (i < numOfConsumer) {
+        if (i < cNum) {
             let nodeDiv = createNodeDiv();
             consumerList.push(new Consumer(nodeDiv, a));
         }
-        if (i < numOfSupplier) {
+        if (i < sNum) {
             let nodeDiv = createNodeDiv();
             supplierList.push(new Supplier(nodeDiv, b));
         }
@@ -133,11 +131,11 @@ function drawDSCurveChart(): void {
     curveChartDrawer.drawChart(curveData, initialEq);
 }
 
-function drawMarketEqData(dealPriceToday: { "price": number, "minDelta": number }): void {
+function drawMarketEqData(dealPriceToday: number[]): void {
     // Prepare Market Eq Data
-    if (dealPriceToday.price > 0) {
+    if (dealPriceToday.length > 0) {
         // marketEqData.push([marketEqData.length, MyMath.avg(dealPriceToday)]);
-        marketEqData.push([marketEqData.length, dealPriceToday.price]);
+        marketEqData.push([marketEqData.length, MyMath.mid(dealPriceToday)]);
     } else {
         if (marketEqData.length === 1) marketEqData.push([marketEqData.length, initialEq]);
         else {
@@ -152,7 +150,7 @@ function deal(c: Consumer, s: Supplier): void {
     s.deal();
 }
 
-function match(phase: number, cList: Consumer[], sList: Supplier[], pauseTime: number, dealPriceToday: { "price": number, "minDelta": number }): { "undealtCList": Consumer[], "undealtSList": Supplier[], "dealPriceToday": { "price": number, "minDelta": number } } {
+function match(phase: number, cList: Consumer[], sList: Supplier[], pauseTime: number, dealPriceToday: number[]): { "undealtCList": Consumer[], "undealtSList": Supplier[], "dealPriceToday": number[] } {
     // suffle consumer list and supplier list before matching
     cList = MyMath.suffleArray(cList);
     sList = MyMath.suffleArray(sList);
@@ -167,26 +165,24 @@ function match(phase: number, cList: Consumer[], sList: Supplier[], pauseTime: n
                 break;
             }
         }
-        if (supplierFound === undefined) {
+        if (supplierFound === undefined && sList.length > 0) {
             let j = i % sList.length;
             supplierFound = sList[j];
         }
         setTimeout(() => {
             if (supplierFound !== undefined) eachConsumer.findSupplier(supplierFound);
         }, pauseTime / 4 * phase);
-        let supplierResponse = supplierFound.decideWhetherToSell(eachConsumer);
-        if (supplierResponse === "accept") {
-            deal(eachConsumer, supplierFound);
+        if (supplierFound !== undefined) {
+            let supplierResponse = supplierFound.decideWhetherToSell(eachConsumer);
+            if (supplierResponse === "accept") {
+                deal(eachConsumer, supplierFound);
 
-            // Record Consumer and Supplier Surplus
-            let dealPrice = (eachConsumer.bidPrice + supplierFound.askPrice) / 2;
-            let delta = eachConsumer.bidPrice - dealPrice;
-            if (delta < dealPriceToday.minDelta) {
-                dealPriceToday.price = dealPrice;
-                dealPriceToday.minDelta = delta;
+                // Record Consumer and Supplier Surplus
+                let dealPrice = (eachConsumer.bidPrice + supplierFound.askPrice) / 2;
+                dealPriceToday.push(dealPrice);
+                consumerSurplus += (eachConsumer.maxPayable - dealPrice);
+                producerSurplus += (dealPrice - supplierFound.minSellable);
             }
-            consumerSurplus += (eachConsumer.maxPayable - dealPrice);
-            producerSurplus += (dealPrice - supplierFound.minSellable);
         }
     }
     let undealtCList: Consumer[] = [];
@@ -205,11 +201,12 @@ function match(phase: number, cList: Consumer[], sList: Supplier[], pauseTime: n
 }
 
 function simulate(): void {
+    checkConsumerAndSupplierNum();
     consumerSurplus = 0;
     producerSurplus = 0;
     everyoneGoToMarket();
     drawDSCurveChart();
-    let dealPriceToday: any = { "price": 0, "minDelta": Infinity };
+    let dealPriceToday: number[] = [];
 
     // Phase 1: matching each consumer to each supplier
     let matchResult1: any = match(1, consumerList, supplierList, pauseTime, dealPriceToday);
@@ -237,7 +234,7 @@ function simulate(): void {
         consumerListAfterPhase2.length = 0;
         supplierListAfterPahse1.length = 0;
         supplierListAfterPahse2.length = 0;
-        dealPriceToday = undefined;
+        dealPriceToday.length = 0;
         matchResult1 = undefined;
         matchResult1 = undefined;
 
@@ -255,10 +252,8 @@ function enableControl(): void {
 }
 
 function disableControl(): void {
-    if (initialEqInput instanceof HTMLInputElement && numOfConsumerInput instanceof HTMLInputElement && numOfSupplierInput instanceof HTMLInputElement && pauseTimeInput instanceof HTMLInputElement) {
+    if (initialEqInput instanceof HTMLInputElement && pauseTimeInput instanceof HTMLInputElement) {
         initialEqInput.disabled = true;
-        numOfConsumerInput.disabled = true;
-        numOfSupplierInput.disabled = true;
         pauseTimeInput.disabled = true;
     }
 }
@@ -278,8 +273,17 @@ function highlightTab(e: Event): void {
 function initAllUserInputs(): void {
     if (initialEqInput instanceof HTMLInputElement && numOfConsumerInput instanceof HTMLInputElement && numOfSupplierInput instanceof HTMLInputElement && pauseTimeInput instanceof HTMLInputElement) {
         initialEqInput.value = "100";
+
+        numOfConsumerInput.min = "1";
+        numOfConsumerInput.max = "300";
+        numOfConsumerInput.step = "1";
         numOfConsumerInput.value = "30";
+
+        numOfSupplierInput.min = "1";
+        numOfSupplierInput.max = "300";
+        numOfSupplierInput.step = "1";
         numOfSupplierInput.value = "30";
+
         pauseTimeInput.value = "40";
     }
 }
@@ -287,8 +291,6 @@ function initAllUserInputs(): void {
 function readAllUserInputs(): void {
     if (initialEqInput instanceof HTMLInputElement && numOfConsumerInput instanceof HTMLInputElement && numOfSupplierInput instanceof HTMLInputElement && pauseTimeInput instanceof HTMLInputElement) {
         initialEq = parseInt(initialEqInput.value);
-        numOfConsumer = parseInt(numOfConsumerInput.value);
-        numOfSupplier = parseInt(numOfSupplierInput.value);
         pauseTime = parseInt(pauseTimeInput.value);
     }
 }
@@ -308,11 +310,23 @@ function start(e: Event): void {
         consumerSurplus = 0;
         producerSurplus = 0;
         nodeDivSize = 20;
-        createAllIndivuduals();
-
         shouldContinue = true;
         changeRunBtnToPauseBtn();
         simulate(); //recursive function
+    }
+}
+
+function checkConsumerAndSupplierNum(): void {
+    if (numOfConsumerInput instanceof HTMLInputElement && numOfSupplierInput instanceof HTMLInputElement) {
+        let consumerNumDiff = parseInt(numOfConsumerInput.value) - consumerList.length;
+        let supplierNumDiff = parseInt(numOfSupplierInput.value) - supplierList.length;
+        createIndivuduals(consumerNumDiff, supplierNumDiff);
+        while (consumerList.length > parseInt(numOfConsumerInput.value)) {
+            consumerList.pop()?.divControlled.remove();
+        }
+        while (supplierList.length > parseInt(numOfSupplierInput.value)) {
+            supplierList.pop()?.divControlled.remove();
+        }
     }
 }
 
@@ -348,7 +362,7 @@ function addAllEventListeners(): void {
     for (let each of allTabs) {
         if (each instanceof HTMLElement) each.addEventListener("click", highlightTab);
     }
-    if (runPauseBtn !== null && clearBtn !== null) {
+    if (runPauseBtn !== null && clearBtn !== null && numOfConsumerInput !== null) {
         runPauseBtn.addEventListener("click", start);
         clearBtn.addEventListener("click", () => location.reload());
     }

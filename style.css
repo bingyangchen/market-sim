@@ -162,11 +162,11 @@ body {
 }
 
 #parameter-field>div>div {
-    width: 180px;
+    width: 100px;
 }
 
 #parameter-field>div>input {
-    width: 40px;
+    width: 120px;
 }
 
 #btn-field {

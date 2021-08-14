@@ -12,6 +12,11 @@ export class MyMath {
         if (arr.length === 0) return 0;
         return arr.reduce((a: number, b: number) => a + b, 0) / arr.length;
     }
+    public static mid(arr: number[]): number {
+        if (arr.length === 0) return 0;
+        arr.sort((a: number, b: number) => b - a);
+        return arr[Math.floor((arr.length - 1) / 2)];
+    }
     public static normalSample(mu: number, std: number): number {
         let u = 0, v = 0;
         while (u === 0) u = Math.random(); //Converting [0,1) to (0,1)

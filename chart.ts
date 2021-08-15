@@ -60,7 +60,13 @@ export class DSCurveChart extends MyGoogleChart {
                         min: initialEq * 0
                     }
                 },
-                hAxis: { title: 'Q' },
+                hAxis: {
+                    title: 'Q',
+                    viewWindow: {
+                        max: 30,
+                        min: 0
+                    }
+                },
                 chartArea: { left: "10%", top: "5%", width: '75%', height: '80%' }
             };
             this._chart.draw(data, option);

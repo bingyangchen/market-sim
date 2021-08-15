@@ -26,7 +26,7 @@ export class Individual {
     }
     deal() {
         this._dealt = true;
-        this._aggressiveness *= 1.1;
+        this._aggressiveness = Math.max(0.05, this._aggressiveness * 1.1);
     }
     faildToDeal() {
         this._aggressiveness *= 0.9;

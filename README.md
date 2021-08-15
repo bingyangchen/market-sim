@@ -23,7 +23,3 @@ This project trys to simulate the transactions happeneing in the market. You can
 1. Why is the final equillibrium quantity less than where the Demand Curve and the Supply Curve actually cross?
 
 * It's because that we let the consumers randomly find the suppliers, and each comsumer only has two chances to find a supplier willing to sell, so some *possible* matching result may not realize.
-
-## TODO
-
- 1. The function off add new comsumer/supplier.

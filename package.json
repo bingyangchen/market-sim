@@ -4,9 +4,7 @@
     "description": "",
     "main": "./modules/script.js",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
-        "start:build": "tsc -w",
-        "start": "concurrently npm:start:*"
+        "test": "echo \"Error: no test specified\" && exit 1"
     },
     "repository": {
         "type": "git",

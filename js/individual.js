@@ -1,5 +1,8 @@
 import { MyMath } from "./myMath.js";
 export class Individual {
+    divControlled;
+    _aggressiveness;
+    _dealt;
     constructor(aDiv) {
         this.divControlled = aDiv;
         this._aggressiveness = MyMath.oneTailNormalSample(0, 0.25, "right");
@@ -33,6 +36,8 @@ export class Individual {
     }
 }
 export class Consumer extends Individual {
+    _maxPayable;
+    _bidPrice;
     constructor(aDiv, maxPayable) {
         super(aDiv);
         this.divControlled.style.backgroundColor = "#4C8BF5";
@@ -68,6 +73,8 @@ export class Consumer extends Individual {
     }
 }
 export class Supplier extends Individual {
+    _minSellable;
+    _askPrice;
     constructor(aDiv, minSellable) {
         super(aDiv);
         this.divControlled.style.backgroundColor = "#DE5246";

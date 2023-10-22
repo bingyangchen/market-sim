@@ -22,7 +22,7 @@ export class MyMath {
     static normalSample(mu, std) {
         let u = 0, v = 0;
         while (u === 0)
-            u = Math.random(); //Converting [0,1) to (0,1)
+            u = Math.random();
         while (v === 0)
             v = Math.random();
         return std * Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v) + mu;
@@ -30,7 +30,7 @@ export class MyMath {
     static oneTailNormalSample(mu, std, side) {
         let u = 0, v = 0;
         while (u === 0)
-            u = Math.random(); //Converting [0,1) to (0,1)
+            u = Math.random();
         while (v === 0)
             v = Math.random();
         if (side === "left") {

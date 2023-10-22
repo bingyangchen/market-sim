@@ -2,7 +2,7 @@
     "name": "market-sim",
     "version": "1.0.0",
     "description": "",
-    "main": "./modules/script.js",
+    "main": "./js/main.js",
     "scripts": {
         "init-ts": "tsc --init",
         "watch-ts": "tsc -w",

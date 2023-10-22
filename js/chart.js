@@ -1,4 +1,7 @@
 export class MyGoogleChart {
+    _chartDiv;
+    _chartType;
+    _chart;
     constructor(chartDiv) {
         this._chartDiv = chartDiv;
         this._chartType = "";
@@ -74,9 +77,9 @@ export class DSCurveChart extends MyGoogleChart {
     }
 }
 export class SurplusChart extends MyGoogleChart {
+    _vAxisMax = 0;
     constructor(chartDiv) {
         super(chartDiv);
-        this._vAxisMax = 0;
         this._chartType = "ColumnChart";
         google.charts.load('current', { 'packages': ['corechart', 'bar'] });
         google.charts.setOnLoadCallback(() => {

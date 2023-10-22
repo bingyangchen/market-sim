@@ -1,7 +1,7 @@
-import { Consumer, Supplier } from './individual.js';
-import { PriceMachine } from './priceMachine.js';
-import { MyMath } from './myMath.js';
-import { DSCurveChart, MarketEqChart, SurplusChart } from './chart.js';
+import { DSCurveChart, MarketEqChart, SurplusChart } from "./chart.js";
+import { Consumer, Supplier } from "./individual.js";
+import { MyMath } from "./myMath.js";
+import { PriceMachine } from "./priceMachine.js";
 let animationField = document.getElementById("animation-field");
 let marketEqChart = document.getElementById("market-eq-chart");
 let marketEqChartDrawer;
@@ -70,7 +70,7 @@ function everyoneGoBackAndRePricing() {
         setTimeout(() => {
             if (animationField !== null)
                 eachConsumer.goBack(animationField);
-        }, pauseTime / 4 * 3);
+        }, (pauseTime / 4) * 3);
         eachConsumer.dealt = false;
         eachConsumer.bid();
     }
@@ -78,33 +78,27 @@ function everyoneGoBackAndRePricing() {
         setTimeout(() => {
             if (animationField !== null)
                 eachSupplier.goBack(animationField);
-        }, pauseTime / 4 * 3);
+        }, (pauseTime / 4) * 3);
         eachSupplier.dealt = false;
         eachSupplier.ask();
     }
 }
 function drawDSCurveChart() {
-    // prepare demand/supply curve data
     let allBidPrices = [];
     let allAskPrices = [];
     for (let eachConsumer of consumerList)
         allBidPrices.push(eachConsumer.bidPrice);
     for (let eachSupplier of supplierList)
         allAskPrices.push(eachSupplier.askPrice);
-    // sort allBidPrices in descending order
     allBidPrices.sort((a, b) => b - a);
-    // sort allAskPrices in ascending order
     allAskPrices.sort((a, b) => a - b);
-    // prepare demand/supply curve data
     let allPayable = [];
     let allSellable = [];
     for (let eachConsumer of consumerList)
         allPayable.push(eachConsumer.maxPayable);
     for (let eachSupplier of supplierList)
         allSellable.push(eachSupplier.minSellable);
-    // sort allPayable in descending order
     allPayable.sort((a, b) => b - a);
-    // sort allSellable in ascending order
     allSellable.sort((a, b) => a - b);
     let curveData = [["Q", "d", "s", "D", "S"]];
     let maxLoop = Math.max(allBidPrices.length, allAskPrices.length);
@@ -132,16 +126,17 @@ function drawDSCurveChart() {
     curveChartDrawer.drawChart(curveData, initialEq);
 }
 function drawMarketEqData(dealPriceToday) {
-    // Prepare Market Eq Data
     if (dealPriceToday.length > 0) {
-        // marketEqData.push([marketEqData.length, MyMath.avg(dealPriceToday)]);
         marketEqData.push([marketEqData.length, MyMath.mid(dealPriceToday)]);
     }
     else {
         if (marketEqData.length === 1)
             marketEqData.push([marketEqData.length, initialEq]);
         else {
-            marketEqData.push([marketEqData.length, marketEqData[marketEqData.length - 1][2]]);
+            marketEqData.push([
+                marketEqData.length,
+                marketEqData[marketEqData.length - 1][2],
+            ]);
         }
     }
     marketEqChartDrawer.drawChart(marketEqData);
@@ -151,7 +146,6 @@ function deal(c, s) {
     s.deal();
 }
 function match(phase, cList, sList, pauseTime, dealPriceToday) {
-    // suffle consumer list and supplier list before matching
     cList = MyMath.suffleArray(cList);
     sList = MyMath.suffleArray(sList);
     let availableSupplierList = [...sList];
@@ -172,16 +166,15 @@ function match(phase, cList, sList, pauseTime, dealPriceToday) {
         setTimeout(() => {
             if (supplierFound !== undefined)
                 eachConsumer.findSupplier(supplierFound);
-        }, pauseTime / 4 * phase);
+        }, (pauseTime / 4) * phase);
         if (supplierFound !== undefined) {
             let supplierResponse = supplierFound.decideWhetherToSell(eachConsumer);
             if (supplierResponse === "accept") {
                 deal(eachConsumer, supplierFound);
-                // Record Consumer and Supplier Surplus
                 let dealPrice = (eachConsumer.bidPrice + supplierFound.askPrice) / 2;
                 dealPriceToday.push(dealPrice);
-                consumerSurplus += (eachConsumer.maxPayable - dealPrice);
-                producerSurplus += (dealPrice - supplierFound.minSellable);
+                consumerSurplus += eachConsumer.maxPayable - dealPrice;
+                producerSurplus += dealPrice - supplierFound.minSellable;
             }
         }
     }
@@ -196,9 +189,9 @@ function match(phase, cList, sList, pauseTime, dealPriceToday) {
             undealtSList.push(each);
     }
     return {
-        "undealtCList": undealtCList,
-        "undealtSList": undealtSList,
-        "dealPriceToday": dealPriceToday
+        undealtCList: undealtCList,
+        undealtSList: undealtSList,
+        dealPriceToday: dealPriceToday,
     };
 }
 function simulate() {
@@ -208,17 +201,14 @@ function simulate() {
     everyoneGoToMarket();
     drawDSCurveChart();
     let dealPriceToday = [];
-    // Phase 1: matching each consumer to each supplier
     let matchResult1 = match(1, consumerList, supplierList, pauseTime, dealPriceToday);
     let consumerListAfterPhase1 = matchResult1.undealtCList;
     let supplierListAfterPahse1 = matchResult1.undealtSList;
     dealPriceToday = matchResult1.dealPriceToday;
-    // Phase 2: those un-dealt consumer go finding another un-dealt supplier
     let matchResult2 = match(2, consumerListAfterPhase1, supplierListAfterPahse1, pauseTime, dealPriceToday);
     let consumerListAfterPhase2 = matchResult2.undealtCList;
     let supplierListAfterPahse2 = matchResult2.undealtSList;
     dealPriceToday = matchResult2.dealPriceToday;
-    // Record Fail to Deal
     for (let each of consumerListAfterPhase2)
         each.faildToDeal();
     for (let each of supplierListAfterPahse2)
@@ -227,7 +217,6 @@ function simulate() {
     drawMarketEqData(dealPriceToday);
     surplusChartDrawer.drawChart(consumerSurplus, producerSurplus);
     if (shouldContinue) {
-        // prevent memory leak
         consumerListAfterPhase1.length = 0;
         consumerListAfterPhase2.length = 0;
         supplierListAfterPahse1.length = 0;
@@ -238,11 +227,6 @@ function simulate() {
         setTimeout(() => simulate(), pauseTime);
     }
 }
-function enableAllUserInputs() {
-    if (pauseTimeInput instanceof HTMLInputElement) {
-        pauseTimeInput.disabled = false;
-    }
-}
 function disableAllUserInputs() {
     if (pauseTimeInput instanceof HTMLInputElement) {
         pauseTimeInput.disabled = true;
@@ -250,7 +234,8 @@ function disableAllUserInputs() {
 }
 function highlightTab(e) {
     for (let i = 0; i < allTabs.length; i++) {
-        if (allTabs[i] === e.currentTarget && allInfoCharts[i] instanceof HTMLElement) {
+        if (allTabs[i] === e.currentTarget &&
+            allInfoCharts[i] instanceof HTMLElement) {
             allTabs[i].classList.add("active");
             allInfoCharts[i].classList.add("active");
         }
@@ -261,7 +246,9 @@ function highlightTab(e) {
     }
 }
 function initAllUserInputs() {
-    if (numOfConsumerInput instanceof HTMLInputElement && numOfSupplierInput instanceof HTMLInputElement && pauseTimeInput instanceof HTMLInputElement) {
+    if (numOfConsumerInput instanceof HTMLInputElement &&
+        numOfSupplierInput instanceof HTMLInputElement &&
+        pauseTimeInput instanceof HTMLInputElement) {
         numOfConsumerInput.min = "1";
         numOfConsumerInput.max = "300";
         numOfConsumerInput.step = "1";
@@ -278,8 +265,11 @@ function readAllUserInputs() {
         pauseTime = parseInt(pauseTimeInput.value);
     }
 }
-function start(e) {
-    if (animationField !== null && marketEqChart instanceof HTMLElement && surplusChart instanceof HTMLElement && curveChart instanceof HTMLElement) {
+function start() {
+    if (animationField !== null &&
+        marketEqChart instanceof HTMLElement &&
+        surplusChart instanceof HTMLElement &&
+        curveChart instanceof HTMLElement) {
         readAllUserInputs();
         disableAllUserInputs();
         initialEq = 100;
@@ -298,27 +288,27 @@ function start(e) {
     }
 }
 function checkConsumerAndSupplierNum() {
-    var _a, _b;
-    if (numOfConsumerInput instanceof HTMLInputElement && numOfSupplierInput instanceof HTMLInputElement) {
+    if (numOfConsumerInput instanceof HTMLInputElement &&
+        numOfSupplierInput instanceof HTMLInputElement) {
         let consumerNumDiff = parseInt(numOfConsumerInput.value) - consumerList.length;
         let supplierNumDiff = parseInt(numOfSupplierInput.value) - supplierList.length;
         createIndivuduals(consumerNumDiff, supplierNumDiff);
         while (consumerList.length > parseInt(numOfConsumerInput.value)) {
-            (_a = consumerList.pop()) === null || _a === void 0 ? void 0 : _a.divControlled.remove();
+            consumerList.pop()?.divControlled.remove();
         }
         while (supplierList.length > parseInt(numOfSupplierInput.value)) {
-            (_b = supplierList.pop()) === null || _b === void 0 ? void 0 : _b.divControlled.remove();
+            supplierList.pop()?.divControlled.remove();
         }
     }
 }
-function pause(e) {
+function pause() {
     shouldContinue = false;
     changePauseBtnToContinueBtn();
 }
 function continueToRun() {
     shouldContinue = true;
     changeRunBtnToPauseBtn();
-    simulate(); //recursive function
+    simulate();
 }
 function changeRunBtnToPauseBtn() {
     if (runPauseBtn instanceof HTMLButtonElement) {
@@ -336,12 +326,14 @@ function changePauseBtnToContinueBtn() {
     }
 }
 function updateConsumerNum() {
-    if (numOfConsumerShow !== null && numOfConsumerInput instanceof HTMLInputElement) {
+    if (numOfConsumerShow !== null &&
+        numOfConsumerInput instanceof HTMLInputElement) {
         numOfConsumerShow.innerHTML = numOfConsumerInput.value;
     }
 }
 function updateSupplierNum() {
-    if (numOfSupplierShow !== null && numOfSupplierInput instanceof HTMLInputElement) {
+    if (numOfSupplierShow !== null &&
+        numOfSupplierInput instanceof HTMLInputElement) {
         numOfSupplierShow.innerHTML = numOfSupplierInput.value;
     }
 }
@@ -350,7 +342,10 @@ function addAllEventListeners() {
         if (each instanceof HTMLElement)
             each.addEventListener("click", highlightTab);
     }
-    if (runPauseBtn !== null && clearBtn !== null && numOfConsumerInput !== null && numOfSupplierInput !== null) {
+    if (runPauseBtn !== null &&
+        clearBtn !== null &&
+        numOfConsumerInput !== null &&
+        numOfSupplierInput !== null) {
         numOfConsumerInput.addEventListener("input", updateConsumerNum);
         numOfSupplierInput.addEventListener("input", updateSupplierNum);
         runPauseBtn.addEventListener("click", start);

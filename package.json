@@ -4,7 +4,10 @@
     "description": "",
     "main": "./modules/script.js",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "init-ts": "tsc --init",
+        "watch-ts": "tsc -w",
+        "watch-sass": "sass --watch .:. --no-source-map",
+        "dev": "concurrently --kill-others 'npm:watch-*'"
     },
     "repository": {
         "type": "git",
@@ -18,7 +21,8 @@
     },
     "homepage": "https://github.com/Jamison-Chen/market-sim#readme",
     "devDependencies": {
-        "concurrently": "^6.2.0",
-        "typescript": "^4.3.5"
+        "concurrently": "^8.2.2",
+        "sass": "^1.69.4",
+        "typescript": "^5.2.2"
     }
 }

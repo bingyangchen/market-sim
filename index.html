@@ -1,55 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <script
+            type="text/javascript"
+            src="https://www.gstatic.com/charts/loader.js"
+        ></script>
+        <link rel="stylesheet" href="style.css" />
+        <script type="module" src="./modules/script.js" defer></script>
+        <title>MarketSim</title>
+    </head>
 
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <link rel="stylesheet" href="style.css">
-    <script type="module" src="./modules/script.js" defer></script>
-    <title>Demand/Supply Simulator</title>
-</head>
-
-<body>
-    <div id="animation-field"></div>
-    <div id="right-side">
-        <div id="market-eq-chart"></div>
-        <div class=tab-container>
-            <div class="tabs clearfix">
-                <div id="surplus-tab" class="tab active">Surplus</div>
-                <div id="curve-tab" class="tab">Curve</div>
+    <body>
+        <div id="animation-field"></div>
+        <div id="right-side">
+            <div id="market-eq-chart"></div>
+            <div class="tab-container">
+                <div class="tabs clearfix">
+                    <div id="surplus-tab" class="tab active">Surplus</div>
+                    <div id="curve-tab" class="tab">Curve</div>
+                </div>
+            </div>
+            <div id="surplus-chart" class="info-chart active"></div>
+            <div id="demand-supply-chart" class="info-chart"></div>
+            <div id="control-bar">
+                <div id="parameter-field">
+                    <div>
+                        <span id="consumer-num-show"></span>
+                        <span>Consumers</span>
+                    </div>
+                    <div>
+                        <input id="number-of-consumer" type="range" />
+                    </div>
+                    <div>
+                        <span id="supplier-num-show"></span>
+                        <span>Suppliers</span>
+                    </div>
+                    <div>
+                        <input id="number-of-supplier" type="range" />
+                    </div>
+                    <div>
+                        <span>Pause Time (ms)</span>
+                        <input id="pause-time" type="text" />
+                    </div>
+                </div>
+                <div id="btn-field">
+                    <button id="run-pause-btn">RUN</button>
+                    <button id="clear-btn">CLEAR</button>
+                </div>
             </div>
         </div>
-        <div id="surplus-chart" class="info-chart active"></div>
-        <div id="demand-supply-chart" class="info-chart"></div>
-        <div id="control-bar">
-            <div id="parameter-field">
-                <div>
-                    <span id="consumer-num-show"></span>
-                    <span>Consumers</span>
-                </div>
-                <div>
-                    <input id="number-of-consumer" type="range">
-                </div>
-                <div>
-                    <span id="supplier-num-show"></span>
-                    <span>Suppliers</span>
-                </div>
-                <div>
-                    <input id="number-of-supplier" type="range">
-                </div>
-                <div>
-                    <span>Pause Time (ms)</span>
-                    <input id="pause-time" type="text">
-                </div>
-            </div>
-            <div id="btn-field">
-                <button id="run-pause-btn">RUN</button>
-                <button id="clear-btn">CLEAR</button>
-            </div>
-        </div>
-    </div>
-</body>
-
+    </body>
 </html>

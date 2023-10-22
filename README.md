@@ -1,4 +1,4 @@
-# Demand/Supply Simulator
+# MarketSim
 
 This project trys to simulate the transactions happeneing in the market. You can see how the market organize itself, that is, run into equilibrium, and the difference of consumer surplus and producer surplus under different situations.
 
@@ -20,6 +20,6 @@ This project trys to simulate the transactions happeneing in the market. You can
 
 ## Questions You Might Have
 
-1. Why is the final equillibrium quantity less than where the Demand Curve and the Supply Curve actually cross?
+1. Why is the final equillibrium quantity less than where the demand Ccrve and the supply curve actually cross?
 
 * It's because that we let the consumers randomly find the suppliers, and each comsumer only has two chances to find a supplier willing to sell, so some *possible* matching result may not realize.

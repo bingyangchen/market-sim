@@ -15,16 +15,26 @@ export class Individual {
         this._dealt = b;
     }
     public move(xPos: number, yPos: number): void {
-        this.divControlled.style.left = `${xPos - this.divControlled.offsetWidth / 2}px`;
-        this.divControlled.style.top = `${yPos - this.divControlled.offsetHeight / 2}px`;
+        this.divControlled.style.left = `${
+            xPos - this.divControlled.offsetWidth / 2
+        }px`;
+        this.divControlled.style.top = `${
+            yPos - this.divControlled.offsetHeight / 2
+        }px`;
     }
     public goToMarket(field: HTMLElement): void {
         const w = this.divControlled.offsetWidth;
         const h = this.divControlled.offsetHeight;
         const hPadding = 0.5 * this.divControlled.offsetWidth;
         const vPadding = 0.5 * this.divControlled.offsetHeight;
-        const xPos = Math.random() * (field.offsetWidth - w - 2 * hPadding) + w / 2 + hPadding;
-        const yPos = Math.random() * (field.offsetHeight - h - 2 * vPadding) + h / 2 + vPadding;
+        const xPos =
+            Math.random() * (field.offsetWidth - w - 2 * hPadding) +
+            w / 2 +
+            hPadding;
+        const yPos =
+            Math.random() * (field.offsetHeight - h - 2 * vPadding) +
+            h / 2 +
+            vPadding;
         this.move(xPos, yPos);
     }
     public deal(): void {
@@ -51,14 +61,19 @@ export class Consumer extends Individual {
         return this._bidPrice;
     }
     public bid(): number {
-        this._bidPrice = this._maxPayable * Math.max(0, (1 - this._aggressiveness));
+        this._bidPrice =
+            this._maxPayable * Math.max(0, 1 - this._aggressiveness);
         return this._bidPrice;
     }
     public findSupplier(aSupplier: Supplier): void {
         const w = aSupplier.divControlled.offsetWidth;
         const h = aSupplier.divControlled.offsetHeight;
-        const xPos = aSupplier.divControlled.offsetLeft - w + Math.random() * (2 + 1) * w;
-        const yPos = aSupplier.divControlled.offsetTop - h + Math.random() * (2 + 1) * h;
+        const xPos =
+            aSupplier.divControlled.offsetLeft -
+            w +
+            Math.random() * (2 + 1) * w;
+        const yPos =
+            aSupplier.divControlled.offsetTop - h + Math.random() * (2 + 1) * h;
         this.move(xPos, yPos);
     }
     public goBack(field: HTMLElement): void {
@@ -66,9 +81,14 @@ export class Consumer extends Individual {
         let h = this.divControlled.offsetHeight;
         let hPadding = 0.5 * this.divControlled.offsetWidth;
         let vPadding = 0.5 * this.divControlled.offsetHeight;
-        let xPos = (Math.random() * (field.offsetWidth - w - 2 * hPadding)) + (w / 2 + hPadding);
-        let availableHeight = (field.offsetHeight - h - 2 * vPadding);
-        let yPos = (Math.random() * availableHeight / 3) + (h / 2 + vPadding) + availableHeight * 2 / 3;
+        let xPos =
+            Math.random() * (field.offsetWidth - w - 2 * hPadding) +
+            (w / 2 + hPadding);
+        let availableHeight = field.offsetHeight - h - 2 * vPadding;
+        let yPos =
+            (Math.random() * availableHeight) / 3 +
+            (h / 2 + vPadding) +
+            (availableHeight * 2) / 3;
         this.move(xPos, yPos);
     }
 }
@@ -103,8 +123,12 @@ export class Supplier extends Individual {
         const h = this.divControlled.offsetHeight;
         const hPadding = 0.5 * this.divControlled.offsetWidth;
         const vPadding = 0.5 * this.divControlled.offsetHeight;
-        const xPos = Math.random() * (field.offsetWidth - w - 2 * hPadding) + (w / 2 + hPadding);
-        const yPos = Math.random() * (field.offsetHeight - h - 2 * vPadding) / 3 + (h / 2 + vPadding);
+        const xPos =
+            Math.random() * (field.offsetWidth - w - 2 * hPadding) +
+            (w / 2 + hPadding);
+        const yPos =
+            (Math.random() * (field.offsetHeight - h - 2 * vPadding)) / 3 +
+            (h / 2 + vPadding);
         this.move(xPos, yPos);
     }
 }

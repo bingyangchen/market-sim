@@ -18,18 +18,41 @@ export class MyMath {
         return arr[Math.floor((arr.length - 1) / 2)];
     }
     public static normalSample(mu: number, std: number): number {
-        let u = 0, v = 0;
+        let u = 0,
+            v = 0;
         while (u === 0) u = Math.random(); //Converting [0,1) to (0,1)
         while (v === 0) v = Math.random();
-        return std * Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v) + mu;
+        return (
+            std * Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v) +
+            mu
+        );
     }
-    public static oneTailNormalSample(mu: number, std: number, side: "left" | "right"): number {
-        let u = 0, v = 0;
+    public static oneTailNormalSample(
+        mu: number,
+        std: number,
+        side: "left" | "right"
+    ): number {
+        let u = 0,
+            v = 0;
         while (u === 0) u = Math.random(); //Converting [0,1) to (0,1)
         while (v === 0) v = Math.random();
         if (side === "left") {
-            return Math.abs(std * Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v)) * -1 + mu;
+            return (
+                Math.abs(
+                    std *
+                        Math.sqrt(-2.0 * Math.log(u)) *
+                        Math.cos(2.0 * Math.PI * v)
+                ) *
+                    -1 +
+                mu
+            );
         }
-        return Math.abs(std * Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v)) + mu;
+        return (
+            Math.abs(
+                std *
+                    Math.sqrt(-2.0 * Math.log(u)) *
+                    Math.cos(2.0 * Math.PI * v)
+            ) + mu
+        );
     }
 }

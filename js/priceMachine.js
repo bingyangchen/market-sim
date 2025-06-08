@@ -1,6 +1,5 @@
 import { MyMath } from "./myMath.js";
 export class PriceMachine {
-    _equilibrium;
     constructor(initialEq) {
         this._equilibrium = initialEq;
     }

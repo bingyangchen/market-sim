@@ -234,8 +234,7 @@ function disableAllUserInputs() {
 }
 function highlightTab(e) {
     for (let i = 0; i < allTabs.length; i++) {
-        if (allTabs[i] === e.currentTarget &&
-            allInfoCharts[i] instanceof HTMLElement) {
+        if (allTabs[i] === e.currentTarget && allInfoCharts[i] instanceof HTMLElement) {
             allTabs[i].classList.add("active");
             allInfoCharts[i].classList.add("active");
         }
@@ -326,14 +325,12 @@ function changePauseBtnToContinueBtn() {
     }
 }
 function updateConsumerNum() {
-    if (numOfConsumerShow !== null &&
-        numOfConsumerInput instanceof HTMLInputElement) {
+    if (numOfConsumerShow !== null && numOfConsumerInput instanceof HTMLInputElement) {
         numOfConsumerShow.innerHTML = numOfConsumerInput.value;
     }
 }
 function updateSupplierNum() {
-    if (numOfSupplierShow !== null &&
-        numOfSupplierInput instanceof HTMLInputElement) {
+    if (numOfSupplierShow !== null && numOfSupplierInput instanceof HTMLInputElement) {
         numOfSupplierShow.innerHTML = numOfSupplierInput.value;
     }
 }

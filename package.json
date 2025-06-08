@@ -6,23 +6,25 @@
     "scripts": {
         "init-ts": "tsc --init",
         "watch-ts": "tsc -w",
-        "watch-sass": "sass --watch .:. --no-source-map",
-        "dev": "concurrently --kill-others 'npm:watch-*'"
+        "watch-sass": "sass --watch --no-source-map --style=compressed style.scss style.css",
+        "dev": "concurrently --kill-others 'npm:watch-*' 'live-server --port=3000'",
+        "build": "tsc && sass --no-source-map --style=compressed style.scss style.css"
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/Jamison-Chen/market-sim.git"
+        "url": "git+https://github.com/bingyangchen/market-sim.git"
     },
     "keywords": [],
-    "author": "",
+    "author": "Bing-Yang Chen",
     "license": "MIT",
     "bugs": {
-        "url": "https://github.com/Jamison-Chen/market-sim/issues"
+        "url": "https://github.com/bingyangchen/market-sim/issues"
     },
-    "homepage": "https://github.com/Jamison-Chen/market-sim#readme",
+    "homepage": "https://github.com/bingyangchen/market-sim#readme",
     "devDependencies": {
         "concurrently": "^8.2.2",
-        "sass": "^1.69.4",
-        "typescript": "^5.2.2"
+        "live-server": "^1.2.2",
+        "sass": "^1.89.1",
+        "typescript": "^5.8.3"
     }
 }

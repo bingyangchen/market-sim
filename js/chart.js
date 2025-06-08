@@ -1,7 +1,4 @@
 export class MyGoogleChart {
-    _chartDiv;
-    _chartType;
-    _chart;
     constructor(chartDiv) {
         this._chartDiv = chartDiv;
         this._chartType = "";
@@ -11,7 +8,7 @@ export class MarketEqChart extends MyGoogleChart {
     constructor(chartDiv) {
         super(chartDiv);
         this._chartType = "LineChart";
-        google.charts.load('current', { 'packages': ["corechart"] });
+        google.charts.load("current", { packages: ["corechart"] });
         google.charts.setOnLoadCallback(() => {
             this._chart = new google.visualization[this._chartType](chartDiv);
         });
@@ -20,17 +17,22 @@ export class MarketEqChart extends MyGoogleChart {
         if (google.visualization !== undefined && this._chart !== undefined) {
             let data = google.visualization.arrayToDataTable(dataIn);
             let option = {
-                title: 'Market Equilibrium',
+                title: "Market Equilibrium",
                 titleTextStyle: {
                     fontSize: 16,
                     bold: false,
-                    color: "#777"
+                    color: "#777",
                 },
-                curveType: 'none',
+                curveType: "none",
                 legend: { position: "none" },
                 width: this._chartDiv.offsetWidth,
                 height: this._chartDiv.offsetHeight,
-                chartArea: { left: "10%", top: "15%", width: '80%', height: '70%' }
+                chartArea: {
+                    left: "10%",
+                    top: "15%",
+                    width: "80%",
+                    height: "70%",
+                },
             };
             this._chart.draw(data, option);
         }
@@ -42,7 +44,7 @@ export class DSCurveChart extends MyGoogleChart {
     constructor(chartDiv) {
         super(chartDiv);
         this._chartType = "LineChart";
-        google.charts.load('current', { 'packages': ["corechart"] });
+        google.charts.load("current", { packages: ["corechart"] });
         google.charts.setOnLoadCallback(() => {
             this._chart = new google.visualization[this._chartType](chartDiv);
         });
@@ -51,24 +53,29 @@ export class DSCurveChart extends MyGoogleChart {
         if (google.visualization !== undefined && this._chart !== undefined) {
             let data = google.visualization.arrayToDataTable(dataIn);
             let option = {
-                curveType: 'none',
+                curveType: "none",
                 width: this._chartDiv.offsetWidth,
                 height: this._chartDiv.offsetHeight,
                 vAxis: {
-                    title: 'P',
+                    title: "P",
                     viewWindow: {
                         max: initialEq * 2,
-                        min: initialEq * 0
-                    }
+                        min: initialEq * 0,
+                    },
                 },
                 hAxis: {
-                    title: 'Q',
+                    title: "Q",
                     viewWindow: {
                         max: 30,
-                        min: 0
-                    }
+                        min: 0,
+                    },
                 },
-                chartArea: { left: "10%", top: "5%", width: '75%', height: '80%' }
+                chartArea: {
+                    left: "10%",
+                    top: "5%",
+                    width: "75%",
+                    height: "80%",
+                },
             };
             this._chart.draw(data, option);
         }
@@ -77,11 +84,11 @@ export class DSCurveChart extends MyGoogleChart {
     }
 }
 export class SurplusChart extends MyGoogleChart {
-    _vAxisMax = 0;
     constructor(chartDiv) {
         super(chartDiv);
+        this._vAxisMax = 0;
         this._chartType = "ColumnChart";
-        google.charts.load('current', { 'packages': ['corechart', 'bar'] });
+        google.charts.load("current", { packages: ["corechart", "bar"] });
         google.charts.setOnLoadCallback(() => {
             this._chart = new google.visualization[this._chartType](chartDiv);
         });
@@ -99,14 +106,19 @@ export class SurplusChart extends MyGoogleChart {
                 vAxis: {
                     viewWindow: {
                         max: this._vAxisMax,
-                        min: 0
-                    }
+                        min: 0,
+                    },
                 },
                 bar: { groupWidth: "40%" },
                 width: this._chartDiv.offsetWidth,
                 height: this._chartDiv.offsetHeight,
                 legend: { position: "none" },
-                chartArea: { left: "10%", top: "5%", width: '80%', height: '85%' }
+                chartArea: {
+                    left: "10%",
+                    top: "5%",
+                    width: "80%",
+                    height: "85%",
+                },
             };
             this._chart.draw(data, option);
         }

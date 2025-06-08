@@ -1,8 +1,5 @@
 import { MyMath } from "./myMath.js";
 export class Individual {
-    divControlled;
-    _aggressiveness;
-    _dealt;
     constructor(aDiv) {
         this.divControlled = aDiv;
         this._aggressiveness = MyMath.oneTailNormalSample(0, 0.25, "right");
@@ -36,8 +33,6 @@ export class Individual {
     }
 }
 export class Consumer extends Individual {
-    _maxPayable;
-    _bidPrice;
     constructor(aDiv, maxPayable) {
         super(aDiv);
         this.divControlled.style.backgroundColor = "#4C8BF5";
@@ -51,7 +46,7 @@ export class Consumer extends Individual {
         return this._bidPrice;
     }
     bid() {
-        this._bidPrice = this._maxPayable * Math.max(0, (1 - this._aggressiveness));
+        this._bidPrice = this._maxPayable * Math.max(0, 1 - this._aggressiveness);
         return this._bidPrice;
     }
     findSupplier(aSupplier) {
@@ -66,15 +61,15 @@ export class Consumer extends Individual {
         let h = this.divControlled.offsetHeight;
         let hPadding = 0.5 * this.divControlled.offsetWidth;
         let vPadding = 0.5 * this.divControlled.offsetHeight;
-        let xPos = (Math.random() * (field.offsetWidth - w - 2 * hPadding)) + (w / 2 + hPadding);
-        let availableHeight = (field.offsetHeight - h - 2 * vPadding);
-        let yPos = (Math.random() * availableHeight / 3) + (h / 2 + vPadding) + availableHeight * 2 / 3;
+        let xPos = Math.random() * (field.offsetWidth - w - 2 * hPadding) + (w / 2 + hPadding);
+        let availableHeight = field.offsetHeight - h - 2 * vPadding;
+        let yPos = (Math.random() * availableHeight) / 3 +
+            (h / 2 + vPadding) +
+            (availableHeight * 2) / 3;
         this.move(xPos, yPos);
     }
 }
 export class Supplier extends Individual {
-    _minSellable;
-    _askPrice;
     constructor(aDiv, minSellable) {
         super(aDiv);
         this.divControlled.style.backgroundColor = "#DE5246";
@@ -105,7 +100,8 @@ export class Supplier extends Individual {
         const hPadding = 0.5 * this.divControlled.offsetWidth;
         const vPadding = 0.5 * this.divControlled.offsetHeight;
         const xPos = Math.random() * (field.offsetWidth - w - 2 * hPadding) + (w / 2 + hPadding);
-        const yPos = Math.random() * (field.offsetHeight - h - 2 * vPadding) / 3 + (h / 2 + vPadding);
+        const yPos = (Math.random() * (field.offsetHeight - h - 2 * vPadding)) / 3 +
+            (h / 2 + vPadding);
         this.move(xPos, yPos);
     }
 }
